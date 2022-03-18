@@ -1,6 +1,12 @@
 #! /usr/bin/bash
 
-usage() { echo "Usage: init-recon [-t <target>] (or) [-f <file>]" 1>&2; exit 1; }
+usage() 
+{ 
+    echo "Usage: init-recon [-t <target>] (or) [-f <file>]"
+    echo "Example: init-recon -t google.com"
+    echo "Example: init-recon -f domains.txt"
+    exit 1
+}
 
 # command line Arguments
 getopts t:f:h FLAG;
@@ -10,7 +16,7 @@ case $FLAG in
     *|h) usage;;
 esac
 
-# Setting flags for file and direct domain | reduces code
+# Setting flags for file or domain | reduces code
 if [ $FLAG = "t" ]; then
     dir=$t
     findomain_flag=t
@@ -22,6 +28,9 @@ else
 fi
 
 # Make directories
+if [ ! -d ~/bug-bounty ];then
+    mkdir ~/bug-bounty
+fi
 if [ ! -d ~/bug-bounty/$dir ];then
     mkdir ~/bug-bounty/$dir
 fi
