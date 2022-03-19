@@ -42,6 +42,7 @@ fi
 if [ $FLAG = "f" ]; then
     cp $OPTARG ~/bug-bounty/$dir/recon/
 fi
+
 # Change directory
 cd ~/bug-bounty/$dir/recon
 tput setaf 42; echo "----------- changed directory -----------";tput setaf 7
