@@ -46,9 +46,12 @@ fi
 cd ~/bug-bounty/$dir/recon
 tput setaf 42; echo "----------- changed directory -----------";tput setaf 7
 echo
+tput setaf 1; echo "------- all .txt files will be deleted in ~/bug-bounty/$dir/recon ------";tput setaf 7
+echo "Cancel if not intented"
+sleep 1
 
 # subdomain enumeration with findomain and subfinder
-findomain-linux -$(echo $findomain_flag) $OPTARG -r -o
+findomain-linux -$findomain_flag $OPTARG -r -o
 echo
 echo
 sleep 1
@@ -86,4 +89,5 @@ sleep 1
 echo
 echo
 tput setaf 42; echo "[+] screenshot -------> Aquatone"; tput setaf 7
+echo
 cat subs.live | aquatone
