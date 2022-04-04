@@ -3,8 +3,8 @@
 usage() 
 { 
     echo "Usage: init-recon [-t <target>] (or) [-f <file>]"
-    echo "Example: init-recon -t google.com"
-    echo "Example: init-recon -f domains.txt"
+    echo "Example: init-recon -t tesla.com"
+    echo "Example: init-recon -f root_domains.txt"
     exit 1
 }
 
@@ -33,157 +33,167 @@ fi
 if [ ! -d ~/bug-bounty ];then
     mkdir ~/bug-bounty
 fi
-if [ ! -d ~/bug-bounty/$dir ];then
-    mkdir ~/bug-bounty/$dir
+if [ ! -d ~/bug-bounty/recon ];then
+    mkdir ~/bug-bounty/recon
 fi
-if [ ! -d ~/bug-bounty/$dir/recon ];then
-    mkdir ~/bug-bounty/$dir/recon
+if [ ! -d ~/bug-bounty/recon/$dir ];then
+    mkdir ~/bug-bounty/recon/$dir
+fi
+if [ ! -d ~/bug-bounty/recon/$dir/findomain-subs ];then
+    mkdir ~/bug-bounty/recon/$dir/findomain-subs
 fi
 
 ######################## Copy root domains file ########################
 if [ $FLAG = "f" ]; then
-    cp $OPTARG ~/bug-bounty/$dir/recon/
+    cp $OPTARG ~/bug-bounty/recon/$dir
+    cp $OPTARG ~/bug-bounty/recon/$dir/findomain-subs;
 fi
 
 ######################## Change directory ########################
-cd ~/bug-bounty/$dir/recon
-tput setaf 42; echo "----------- changed directory to $(pwd)-----------";tput setaf 7
-echo;echo;echo;
+cd ~/bug-bounty/recon/$dir
+echo
+tput setaf 42; echo "----------- Storing data here: $(pwd)-----------";tput setaf 7
+echo;echo
 
 ######################## subdomain enumeration with findomain ########################
-mkdir findomain-subs; cd findomain-subs;
+cd findomain-subs
 tput setaf 42; echo "[+] subs enum -------> findomain";tput setaf 7
+echo;tput setaf 3;echo "findomain-linux -$findomain_flag $OPTARG -q -r -o";tput setaf 7
 findomain-linux -$findomain_flag $OPTARG -q -r -o
 sort -u *.txt | tee subs.findomain
-cp subs.findomain ..;cd ..;rm -rf findomain-subs
+cd .. && cp findomain-subs/subs.findomain . && rm -rf findomain-subs
 echo;echo
 sleep 0.5
 
 ######################## subdomain enumeration with subfinder ########################
 tput setaf 42; echo "[+] subs enum -------> subfinder";tput setaf 7
-echo;echo
+echo;tput setaf 3;echo "subfinder -$subfinder_flag $OPTARG -silent -o subs.subfinder";tput setaf 7
 subfinder -$subfinder_flag $OPTARG -silent -o subs.subfinder
 sleep 0.5
 
 ######################## subdomain enumeration with amass ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] subs enum -------> Amass";tput setaf 7
-echo;echo
-amass enum -$amass_flag $OPTARG -silent -dir .
+echo;tput setaf 3;echo "amass enum -active -$amass_flag $OPTARG -silent -dir amass-results";tput setaf 7
+amass enum -active -$amass_flag $OPTARG -silent -dir ./amass-results
+cp amass-results/amass.txt .
 sleep 0.5
 
 ######################## Sorting subs to single file & removing redundant ########################
-sort -u subs.subfinder subs.findomain | tee subs.final
-rm subs.findomain subs.subfinder
+sort -u subs.subfinder subs.findomain amass.txt | tee subs.final
+rm subs.findomain subs.subfinder amass.txt
 
 ######################## Probing for live domains with httpx ########################
-echo;echo
 tput setaf 42; echo "[+] Probing for live domains -------> httpx"; tput setaf 7
-echo;echo
-httpx -l subs.final -silent -nc | awk -F "http(|s)://" {'print $2'} | cut  -d "/" -f 1 | tee subs.live
+echo;tput setaf 3;echo "httpx -l subs.final -silent -nc -o subs.live"
+httpx -l subs.final -silent -nc -o subs.live
+rm subs.final
 sleep 0.5
 
 ######################## Subdomain takeover test with subzy ########################
-echo;echo
 tput setaf 42; echo "[+] subdomain takeover test -------> subzy"; tput setaf 7
-echo;echo
-subzy -targets subs.live -hide_fails
+echo;tput setaf 3;echo "subzy -targets subs.live -hide_fails -concurrency 20"; tput setaf 7
+subzy -targets subs.live -hide_fails -concurrency 20
 sleep 0.5
 
 ######################## Screenshoting with aquatone ########################
-echo;echo
+echo
 mkdir aquatone; cd aquatone;
 tput setaf 42; echo "[+] screenshot -------> Aquatone"; tput setaf 7
-echo;echo
-cat ../subs.live | aquatone
-cd ..
-sleep 0.5
-
-######################## Screenshoting with gowitness ########################
-echo;echo
-mkdir gowitness; cd gowitness;
-tput setaf 42; echo "[+] screenshot -------> gowitness"; tput setaf 7
-echo;echo
-gowitness file ../subs.live
-cd ..
+echo;tput setaf 3;echo "cat subs.live | aquatone"; tput setaf 7
+cat ../subs.live | aquatone 2>/dev/null
+cd ../
 sleep 0.5
 
 ######################## URL Enumeration with waybackurls & gau ########################
-echo;echo
-mkdir gowitness; cd gowitness;
+echo
 tput setaf 42; echo "[+] URL Enumeration -------> waybackurls & gau"; tput setaf 7
-cat subs.live | waybackurls | tee urls.waybackurls
-cat subs.live | gau | tee urls.gau
-sort -u urls.waybackurls urls.gau | urls.live
+tput setaf 3
+echo 'cat subs.live | waybackurls | grep -vE ".(png|jpeg|jpg|gif|svg|css|ttf|tif|tiff|woff|woff2|ico|pdf)"| tee urls.waybackurls'
+tput setaf 7
+cat subs.live | waybackurls | grep -vE ".(png|jpeg|jpg|gif|svg|css|ttf|tif|tiff|woff|woff2|ico|pdf)" | tee urls.waybackurls
+tput setaf 3;echo "cat subs.live | gau --o urls.gau"; tput setaf 7
+cat subs.live | gau --o urls.gau
+sort -u urls.waybackurls urls.gau | tee urls.all
 rm urls.gau urls.waybackurls
 sleep 0.5
 
 ######################## Probing for live urls with httpx ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] Probing for live urls -------> httpx"; tput setaf 7
-echo;echo
-httpx -l subs.live -silent -nc -o urls.live
+echo;tput setaf 3;echo "httpx -l urls.all -nc -o urls.live"; tput setaf 7
+httpx -l urls.all -silent -nc -o urls.live
+rm urls.all
 sleep 0.5
 
 ######################## Grep only urls with params ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] Greping for urls with params -------> grep"; tput setaf 7
-echo;echo
-cat urls.live | grep "=" | tee urls.params
+tput setaf 3;echo 'sort -u urls.live | grep "=" | tee urls.params'; tput setaf 7
+sort -u urls.live | grep "=" | tee urls.params
 sleep 0.5
 
 ######################## Remove params values with qsreplace ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] Remove params values -------> qsreplace"; tput setaf 7
-echo;echo
+echo;tput setaf 3;echo 'cat urls.params | qsreplace | tee urls.params'; tput setaf 7
 cat urls.params | qsreplace | tee urls.params
 sleep 0.5
 
 ######################## Replace params value as FUZZ with qsreplace ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] Replacing params value as FUZZ -------> qsreplace"; tput setaf 7
-echo;echo
-cat urls.params | qsreplace FUZZ | tee urls.fuzz 
+echo;tput setaf 3;echo 'cat urls.params | qsreplace FUZZ | tee urls.fuzz'; tput setaf 7
+cat urls.params | qsreplace FUZZ | tee urls.fuzz
 sleep 0.5
 
 ######################## Test for reflective values with kxss ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] Test for reflective values -------> kxss"; tput setaf 7
-echo;echo
-cat urls.params | kxss | tee urls.kxss | qsreplace
+echo;tput setaf 3;echo "cat urls.params | kxss | sed s'/URL: //'| qsreplace | tee urls.kxss"; tput setaf 7
+cat urls.params | kxss | sed s'/URL: //'| qsreplace | tee urls.kxss
 sleep 0.5
 
 ######################## XSS Test with dalfox ########################
-echo;echo
+echo
 tput setaf 42; echo "[+] XSS Test -------> dalfox"; tput setaf 7
-echo;echo
-dalfox file urls.kxss -o urls_XSS.dalfox
+echo;tput setaf 3;echo "dalfox file urls.kxss -o urls_XSS.dalfox"; tput setaf 7
+dalfox file urls.params -o urls_XSS.dalfox
+sleep 5
+
+######################## Screenshoting with gowitness ########################
+echo
+mkdir gowitness; cd gowitness;
+tput setaf 42; echo "[+] screenshot -------> gowitness"; tput setaf 7
+echo;tput setaf 3;echo "gowitness file -f ../subs.live -t 20"; tput setaf 7
+gowitness file -f ../subs.live -t 20
+cd ..
 sleep 0.5
 
 ######################## LFI Test with ffuf ########################
-echo;echo
-tput setaf 42; echo "[+] LFI Test -------> ffuf"; tput setaf 7
-echo;echo
-cat urls.params | xargs -I {} ffuf -w wordlist {}  -fc 404, 500 -o urls_LFI.ffuf
-sleep 0.5
+# echo;echo
+# tput setaf 42; echo "[+] LFI Test -------> ffuf"; tput setaf 7
+# echo;echo
+# cat urls.params | xargs -I {} ffuf -w wordlist {}  -fc 404, 500 -o urls_LFI.ffuf
+# sleep 0.5
 
 ######################## Open Redirect Test with ffuf ########################
-echo;echo
-tput setaf 42; echo "[+] LFI Test -------> ffuf"; tput setaf 7
-echo;echo
-cat urls.params | xargs -I {} ffuf -w wordlist {}  -fc 404, 500 -o urls_OpenRedirect.ffuf
-sleep 0.5
+# echo;echo
+# tput setaf 42; echo "[+] Open Redirect Test -------> ffuf"; tput setaf 7
+# echo;echo
+# cat urls.params | xargs -I {} ffuf -w wordlist {}  -fc 404, 500 -o urls_OpenRedirect.ffuf
+# sleep 0.5
 
 ######################## Port Analysis ########################
-echo;echo
-tput setaf 42; echo "[+] Port Scan -------> naabu with nmap service enumeration"; tput setaf 7
-echo;echo
-naabu -l subs.live -tp 150 -sa -rate 10000 -json -nmap-cli 'sudo nmap -sS -sV' -no-color -silent
-sleep 0.5
+# echo;echo
+# tput setaf 42; echo "[+] Port Scan -------> naabu with nmap service enumeration"; tput setaf 7
+# echo;echo
+# naabu -l subs.live -tp 150 -sa -rate 10000 -json -nmap-cli 'sudo nmap -sS -sV' -no-color -silent
+# sleep 0.5
 
 ######################## WAF Detection ########################
-cat subs.live | xargs -I {} wafw00f -a {}
-cat subs.live | xargs -I {} nmap {} --script=http-waf-fingerprint -p80,443
-sleep 0.5
+# cat subs.live | xargs -I {} wafw00f -a {}
+# cat subs.live | xargs -I {} nmap {} --script=http-waf-fingerprint -p80,443
+# sleep 0.5
 
 
