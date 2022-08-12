@@ -71,10 +71,20 @@ tput setaf 42; echo -n "[+] subs enum: github-subdomains "
 if [ $FLAG = "t" ]; then
     github-subdomains -d $OPTARG -o subs.github-unsort >/dev/null
 else
-    cat $OPTARG | xargs -I {} github-subdomains -d {} -o subs.github-unsort >/dev/null
+    cat $OPTARG | while read line; do github-subdomains -d $line -o subs-$line.github-unsort >/dev/null
 fi
 sort -u subs.github-unsort > subs.github && rm subs.github-unsort
 tput setaf 3; echo "[$(cat subs.github | wc -l)]"
+sleep 300
+
+######################## Vhosts enumeration with gobuster ########################
+tput setaf 42; echo -n "[+] Vhosts enum: gobuster "
+if [ $FLAG = "t" ]; then
+    gobuster vhost -q -t 25 -o subs.vhosts -u $OPTARG -w ~/wordlists/SecLists/Discovery/DNS/dns-Jhaddix.txt_cleaned >/dev/null
+else
+    cat $OPTARG | while read line; do gobuster vhost -q -t 25 -o subs-$line.vhosts -u $line -w ~/wordlists/SecLists/Discovery/DNS/dns-Jhaddix.txt_cleaned >/dev/null
+fi
+tput setaf 3; echo "[$(cat subs.vhosts | wc -l)]"
 sleep 300
 
 ######################## Probing for live domains with httpx ########################
