@@ -50,7 +50,7 @@ echo
 
 ########### subdomain enumeration with findomain, subfinder, amass passive ###########
 tput setaf 42; echo -n "[+] subs enum: findomain, subfinder, amass passive "
-findomain -$findomain_flag $OPTARG --external-subdomains -i --lightweight-threads 25 -u subs.findomain-1 
+findomain -$findomain_flag $OPTARG --external-subdomains -i -q --lightweight-threads 25 -u subs.findomain-1 >/dev/null
 sort -u external_subdomains/amass/*.txt external_subdomains/subfinder/*.txt > subs.findomain-external
 # Resolve external-subdomains and enumerate with IPs
 findomain -f subs.findomain-external -x -q -i --lightweight-threads 25 -u subs.findomain-2 >/dev/null
