@@ -11,17 +11,21 @@ fi
 
 ################ Tools ################
 # go
-sudo apt install golang
+sudo apt install golang lolcat figlet jq
 
 # findomain
 cd /opt
-sudo git clone https://github.com/findomain/findomain.git
-cd findomain
-cargo build --release
-sudo cp target/release/findomain /opt/bin
+sudo curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+sudo unzip findomain-linux.zip
+sudo chmod +x findomain
+sudo mv findomain /opt/bin
+cd
 
 # amass
 go install -v github.com/OWASP/Amass/v3/...@master
+
+#subfinder
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
 
 # github-subdomains
 go install github.com/gwen001/github-subdomains@latest
