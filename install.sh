@@ -1,91 +1,144 @@
 #! /usr/bin/bash
 
-################
+echo "Tools are saved: /opt"
+echo "Tools binaries are saved: /opt/bin"
+
+# Create directories if not already present
 if [ ! -d /opt ];then
     sudo mkdir /opt
 fi
-
 if [ ! -d /opt/bin ];then
     sudo mkdir /opt/bin
 fi
 
-################ Tools ################
-# go
-sudo apt install golang lolcat figlet jq
-
-# findomain
-cd /opt
-sudo curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
-sudo unzip findomain-linux.zip
-sudo chmod +x findomain
-sudo mv findomain /opt/bin
-cd
+### Tools ###
+# apt installs
+sudo apt update -y
+sudo apt install golang lolcat figlet tput jq cargo massdns gobuster whatweb -y
 
 # amass
-go install -v github.com/OWASP/Amass/v3/...@master
+if ! command -v amass > /dev/null 2>&1; then
+    go install -v github.com/OWASP/Amass/v3/...@master
+fi
 
 #subfinder
-go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+if ! command -v subfinder > /dev/null 2>&1; then
+    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+fi
 
 # github-subdomains
-go install github.com/gwen001/github-subdomains@latest
+if ! command -v github-subdomains > /dev/null 2>&1; then
+    go install github.com/gwen001/github-subdomains@latest
+fi
 
-# gobuster
-sudo apt install gobuster
+# puredns
+if ! command -v puredns > /dev/null 2>&1; then
+    go install github.com/d3mondev/puredns/v2@latest
+fi
+
+# dnsx
+if ! command -v dnsx > /dev/null 2>&1; then
+    go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
+fi
 
 # httpx
-go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+if ! command -v httpx > /dev/null 2>&1; then
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+fi
 
 # github-endpoints
-go install github.com/gwen001/github-endpoints@latest
-
-# waybackurls
-go install github.com/tomnomnom/waybackurls@latest
-
-# gau
-go install github.com/lc/gau/v2/cmd/gau@latest
+if ! command -v github-subdomains > /dev/null 2>&1; then
+    go install github.com/gwen001/github-endpoints@latest
+fi
 
 # gospider
-go install github.com/jaeles-project/gospider@latest
+if ! command -v gospider > /dev/null 2>&1; then
+    go install github.com/jaeles-project/gospider@latest
+fi
 
 # unfurl
-go install github.com/tomnomnom/unfurl@latest
+if ! command -v unfurl > /dev/null 2>&1; then
+    go install github.com/tomnomnom/unfurl@latest
+fi
 
 # subjs
-go install github.com/lc/subjs@latest
-
-# linkfinder.py
-cd /opt
-sudo git clone https://github.com/GerbenJavado/LinkFinder
-cd LinkFinder
-pip3 install -r requirements.txt
-sudo python setup.py install
-cd
-sudo ln -s /opt/LinkFinder/linkfinder.py /opt/bin
-
-# NtHiM
-cargo install NtHiM
-
-# whatweb
-sudo apt install whatweb
+if ! command -v subjs > /dev/null 2>&1; then
+    go install github.com/lc/subjs@latest
+fi
 
 # gf
-go install github.com/tomnomnom/gf@latest
+if ! command -v gf > /dev/null 2>&1; then
+    go install github.com/tomnomnom/gf@latest
+fi
 
 # qsreplace
-go install github.com/tomnomnom/qsreplace@latest
-
-# arjun
-pip3 install arjun
+if ! command -v qsreplace > /dev/null 2>&1; then
+    go install github.com/tomnomnom/qsreplace@latest
+fi
 
 # kxss
-go install github.com/Emoe/kxss@latest
+if ! command -v kxss > /dev/null 2>&1; then
+    go install github.com/Emoe/kxss@latest
+fi
 
 # nuclei
-go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-nuclei -validate
+if ! command -v nuclei > /dev/null 2>&1; then
+    go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+    nuclei -validate
+fi
 
-################ Wordlists ################
+# ripgen
+if ! command -v ripgen > /dev/null 2>&1; then
+    cargo install ripgen
+fi
+
+# arjun
+if ! command -v arjun > /dev/null 2>&1; then
+    pip3 install arjun
+fi
+
+# waymore
+if ! command -v waymore.py > /dev/null 2>&1; then
+    cd /opt
+    sudo git clone https://github.com/xnl-h4ck3r/waymore.git
+    cd waymore
+    sudo python setup.py install
+    sudo chmod +x waymore.py
+    cd
+    sudo ln -s /opt/waymore/waymore.py /opt/bin
+fi
+
+# xnLinkFinder.py
+if ! command -v xnLinkFinder.py > /dev/null 2>&1; then
+    cd /opt
+    sudo git clone https://github.com/xnl-h4ck3r/xnLinkFinder.git
+    cd xnLinkFinder
+    sudo python setup.py install
+fi
+
+# findomain
+if ! command -v findomain > /dev/null 2>&1; then
+    cd /opt
+    sudo curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+    sudo unzip findomain-linux.zip
+    sudo chmod +x findomain
+    sudo mv findomain /opt/bin
+    cd
+fi
+
+### Wordlists ###
 # gf-patterns
+
 # seclists
+sudo apt install seclists
+
 # assestnotes wordlists
+
+### Print any uninstalled tools ###
+tools=("findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
+
+for tool in "${tools[@]}"; do
+    if ! command -v $tool > /dev/null 2>&1; then
+        echo -e "\033[31mInstall $tool manually\033[0m"
+    fi
+done
