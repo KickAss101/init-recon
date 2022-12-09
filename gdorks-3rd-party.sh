@@ -17,3 +17,4 @@ echo site:gitter.im \"$1\" >> gdorks-3rd-party.txt
 echo site:bitbucket.org \"$1\" >> gdorks-3rd-party.txt
 echo site:*.atlassian.net \"$1\" >> gdorks-3rd-party.txt
 echo site:gitlab \"$1\" >> gdorks-3rd-party.txt
+echo site:http://groups.google.com \"$1\"

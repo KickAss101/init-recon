@@ -150,12 +150,6 @@ sleep 5
 
 ################################# JS Enumeration Starts #################################
 ########### JS files Enumeration ###########
-# tput setaf 42; echo -n "[+] JS files enum passive & active: "
-# cat subs.httpx | subjs -c 25 -ua 'Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0' > urls.js-unsort
-# sort -u urls.js-unsort > urls.js
-# tput setaf 3; echo "[$(cat urls.js | wc -l)]"
-# sleep 5
-# Grep all .js urls
 sort -u urls.all | grep -i ".js"  > urls.js
 
 # Make directories to store js files and to store any keys found from them
@@ -166,7 +160,7 @@ cat ../urls.js | xargs -I {} wget {} &>/dev/null
 cd ..
 
 #################### XNLinkFinder ####################
-tput setaf 42; echo -n "[+] Endpoints enumeration from JS: "
+tput setaf 42; echo -n "[+] Endpoints enum: JS "
 # Find urls in JS Files
 xnLinkFinder.py -i js-files -o urls.linkfinder -op params.linkfinder
 tput setaf 3; echo "[Done]"
@@ -182,14 +176,17 @@ fi
 tput setaf 3; echo "[$(cat subs.new | wc -l)]"
 sleep 5
 
-## ADD permutations?! Only do permutations on new subs - Implementation pending...
 ########### Probing for live domains from endpoints and js files with httpx ###########
 tput setaf 42; echo -n "[+] Probing for live subdomains from new subdomains with httpx: "
+# Save only newly found subs
+cat subs.new | anew -d subs.alive > subs.ripgen
+# DNS Permutations
+ripgen -d subs.ripgen -w $permutations > subs.all-unsort
 # Resolve subs with puredns
-cat subs.new | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write subs.puredns &>/dev/null
+cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write subs.puredns &>/dev/null
 # Get A records, CDN info with DNSx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx-2.json &>/dev/null
-rm subs.puredns subs.new
+rm subs.puredns subs.new subs.all-unsort subs.ripgen
 # Extract non CDN IPs
 cat subs.dnsx-2.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u > IPs.new
 tput setaf 3; echo "[$(cat IPs.new | wc -l)]"
@@ -199,6 +196,7 @@ cat subs.dnsx-2.json | jq '.host ' | tr -d '"' | sort -u > subs.alive-2
 cat subs.alive-2 | httpx -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx-2 | wc -l)]"
 # House cleaning for resolved subs, subs with http ports and IPs
+# subs.txt need port scanning
 sort -u subs.httpx subs.httpx-2 > subs.httpx-final && rm subs.httpx subs.httpx-2
 sort -u subs.alive subs.alive-2 > subs.txt && rm subs.alive subs.alive-2
 sort IPs.live IPs.new > IPs.txt && rm IPs.live IPs.new
@@ -206,10 +204,17 @@ echo "Total valid subs: $(cat subs.txt | wc -l)" | lolcat -ia
 echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat -ia
 sleep 5
 
-########### Subdomain takeover test with Nuclei ###########
-tput setaf 42; echo "[+] subdomain takeover test: nuclei"
-nuclei -t subdomain-takeover -l subs.httpx-final -o takeover-results.txt &>/dev/null
-sleep 3
+### Portscan with naabu for subs ###
+naabu -list subs.txt -p- -rate 4000 -o subs.naabu &>/dev/null
+
+### Portscan with naabu for IPs###
+naabu -list IPs.txt -p- -rate 4000 -o IPs.naabu &>/dev/null
+
+### Nuclie Test for subs ###
+nuclei -l subs.naabu -fr -es info -o subs.nuclei &>/dev/null
+
+### Nuclie Test for IPs ###
+nuclei -l IPs.naabu -fr -es info -o IPs.nuclei &>/dev/null
 
 ################### Greping Values Starts ###################
 ### Grep cloud-keys from endpoints ###
@@ -321,9 +326,6 @@ sleep 3
 
 ###################### Dorks Generation Ends ######################
 
-########### RustScan ###########
-mkdir nmap
-rustscan -a IPs.txt --ulimit 5000 -r 1-65535 -- -A -oA nmap/result >/dev/null
 
 ########### Cloud Enumeration ###########
 

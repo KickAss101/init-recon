@@ -130,6 +130,11 @@ if ! command -v findomain > /dev/null 2>&1; then
     cd
 fi
 
+# naabu
+if ! command -v naabu > /dev/null 2>&1; then
+    go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
+fi
+
 ### Wordlists ###
 # gf-patterns
 
