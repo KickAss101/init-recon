@@ -82,7 +82,7 @@ tput setaf 3; echo "[$(cat subs.github | wc -l)]"
 sleep 5
 
 ########### Subs permutations with ripgen ###########
-tput setaf 42; echo -n "[+] subs permutations: ripgen "
+tput setaf 42; echo -n "[+] subs permutations: ripgen (best to run on VPS)"
 sort -u subs.* > subs-all && rm subs.*
 ripgen -d subs-all -w $permutations > subs.all-unsort
 sort -u subs.all-unsort > subs.all && rm subs.all-unsort
@@ -90,7 +90,7 @@ rm subs-all
 tput setaf 3; echo "[$(cat subs.all | wc -l)]"
 
 ########### Resolving Subs & gather IPs with dnsx ###########
-tput setaf 42; echo -n "[+] IPs from subs (best to run on VPS) : "
+tput setaf 42; echo -n "[+] Alive subs from permutations : "
 # puredns
 cat subs.all| puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write subs.puredns &>/dev/null
 # dnsx
@@ -129,7 +129,7 @@ if [ $FLAG = "t" ]; then
 else
     cat $OPTARG | while read line; do github-endpoints -d $line -o urls-$line.github-unsort; done 
 fi
-Clean up
+# Clean up
 sort -u urls.waymore urls*.github-unsort > urls.passive && rm urls.github-unsort urls.waymore
 tput setaf 3; echo "[$(cat urls.passive | wc -l)]"
 sleep 5
@@ -138,10 +138,10 @@ sleep 5
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
 gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 &>/dev/null
 if [ $FLAG = "t" ]; then
-    sort -u urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" > urls.active &>/dev/null
+    sort -u urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u > urls.active &>/dev/null
 else
     roots=$(cat $OPTARG | while read line; do echo -n "$line|"; done | sed 's/.$//')
-    sort -u urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" > urls.active &>/dev/null
+    sort -u urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u > urls.active &>/dev/null
 fi
 tput setaf 3; echo "[$(cat urls.active | wc -l)]"
 sort -u urls.passive urls.active > urls.all && rm urls.passive urls.active
@@ -182,7 +182,7 @@ fi
 tput setaf 3; echo "[$(cat subs.new | wc -l)]"
 sleep 5
 
-######## ADD permutations?! Only do permutations on new subs - Implementation pending...
+## ADD permutations?! Only do permutations on new subs - Implementation pending...
 ########### Probing for live domains from endpoints and js files with httpx ###########
 tput setaf 42; echo -n "[+] Probing for live subdomains from new subdomains with httpx: "
 # Resolve subs with puredns
@@ -305,7 +305,7 @@ nuclie
 if [ $FLAG = "t" ]; then
     cat .shodan.dorks | sed 's|${target}|$OPTARG|'  > shodan-dorks.txt
 else
-    cat .shodan.dorks | while read line; do sed 's|${target}|$line|'  > shodan-dorks-$line.txt
+    cat .shodan.dorks | while read line; do sed 's|${target}|$line|' done  > shodan-dorks-$line.txt
 fi
 sleep 3
 
@@ -313,7 +313,7 @@ sleep 3
 if [ $FLAG = "t" ]; then
     cat .github.dorks | sed 's|${target}|$OPTARG|'  > github-dorks.txt
 else
-    cat .github.dorks | while read line; do sed 's|${target}|$line|'  > github-dorks-$line.txt
+    cat .github.dorks | while read line; do sed 's|${target}|$line|'  done > github-dorks-$line.txt
 fi
 sleep 3
 

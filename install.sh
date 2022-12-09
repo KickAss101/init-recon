@@ -99,13 +99,15 @@ fi
 
 # waymore
 if ! command -v waymore.py > /dev/null 2>&1; then
-    cd /opt
-    sudo git clone https://github.com/xnl-h4ck3r/waymore.git
+    cd
+    mkdir tools
+    cd tools
+    git clone https://github.com/xnl-h4ck3r/waymore.git
     cd waymore
     sudo python setup.py install
-    sudo chmod +x waymore.py
+    chmod +x waymore.py
     cd
-    sudo ln -s /opt/waymore/waymore.py /opt/bin
+    sudo ln -s ~/tools/waymore/waymore.py /opt/bin
 fi
 
 # xnLinkFinder.py
@@ -114,6 +116,8 @@ if ! command -v xnLinkFinder.py > /dev/null 2>&1; then
     sudo git clone https://github.com/xnl-h4ck3r/xnLinkFinder.git
     cd xnLinkFinder
     sudo python setup.py install
+    sudo chmod +x xnLinkFinder.py
+    sudo ln -s /opt/xnLinkFinder/xnLinkFinder.py /opt/bin
 fi
 
 # findomain
