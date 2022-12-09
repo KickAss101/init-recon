@@ -101,11 +101,11 @@ cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.alive
 tput setaf 3; echo "[$(cat subs.alive | wc -l)]"
 
 # Wildcard domains
-tput setaf 42; echo -n "[+] Alive subs from permutations : "
+tput setaf 42; echo -n "[+] Wildcard subs : "
 tput setaf 3; echo "[$(cat subs.wildcards | wc -l)]"
 
 # Non CDN IPs
-tput setaf 42; echo -n "[+] IPs Found : "
+tput setaf 42; echo -n "[+] Non CDN IPs : "
 cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u >> IPs.live && rm subs.all subs.puredns
 tput setaf 3; echo "[$(cat IPs.live | wc -l)]"
 
@@ -193,7 +193,7 @@ cat subs.new | anew -d subs.alive > subs.ripgen
 # DNS Permutations
 ripgen -d subs.ripgen -w $permutations > subs.all-unsort
 # Resolve subs with puredns
-cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
+cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards-2 --write subs.puredns &>/dev/null
 # Get A records, CDN info with DNSx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx-2.json &>/dev/null
 rm subs.puredns subs.new subs.all-unsort subs.ripgen
@@ -202,16 +202,18 @@ cat subs.dnsx-2.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -
 tput setaf 3; echo "[$(cat IPs.new | wc -l)]"
 # Extract resolved subs
 cat subs.dnsx-2.json | jq '.host ' | tr -d '"' | sort -u > subs.alive-2
+
 # Check http ports with httpx
 cat subs.alive-2 | httpx -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx-2 | wc -l)]"
+
 # House cleaning for resolved subs, subs with http ports and IPs
-# subs.txt need port scanning
 sort -u subs.httpx subs.httpx-2 > subs.httpx-final && rm subs.httpx subs.httpx-2
 sort -u subs.alive subs.alive-2 > subs.txt && rm subs.alive subs.alive-2
+sort -u subs.wildcards subs.wildcards-2 > wildcard-subs.txt && rm subs.wildcards subs.wildcards-2
 sort IPs.live IPs.new > IPs.txt && rm IPs.live IPs.new
-echo "Total valid subs: $(cat subs.txt | wc -l)" | lolcat -i
-echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat -i
+echo "Total valid subs: $(cat subs.txt | wc -l)" | lolcat
+echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat
 sleep 5
 
 ### Portscan with naabu for subs ###
@@ -302,15 +304,28 @@ cat subs.httpx-final | gf interestingsubs > subs.interesting
 ########### Automated tests on gf pattern urls ###########
 mkdir automated-test && cd automated-test
 tput setaf 42; echo "[+] Running Automated Tests: $(pwd)"
-# echo
-# tput setaf 42; echo "[+] Redirect Test: "
 
-# sleep 180
+# XSS Test
 tput setaf 42; echo "[+] XSS Test: "
 cat ../urls.fuzz | kxss | sed s'/URL: //'| qsreplace >> ../urls.params-reflect
 dalfox file ../urls.params-reflect --blind $blindXSS -F -o xss-1.log &>/dev/null
 dalfox file gf-patterns/urls.xss --blind $blindXSS -F -o xss-2.log &>/dev/null
 sleep 180
+
+# SSRF Test
+
+# Redirect Test
+
+# SQLi Test
+
+# LFI Test
+
+# RCE Test
+
+# File Upload Test
+
+# SSTI
+
 
 ###################### Dorks Generation Starts ######################
 ########### Manual shodan dorks file ###########
