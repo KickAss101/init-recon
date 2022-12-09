@@ -1,0 +1,79 @@
+[+] Passive URL enum: waymore mv: cannot stat '/home/kali/tools/waymore/results/volk.is/waymore.txt': No such file or directory
+cat: urls.waymore: No such file or directory
+[0]
+[+] Endpoints enum: github-endpoints sort: cannot read: urls.waymore: No such file or directory
+[0]
+[+] Active Endpoints enum: gospider sort: cannot read: 'urls-active/*': No such file or directory
+[0]
+[+] Endpoints enum: JS 
+           o           o    o--o           o         
+           |    o      | /  |    o         |         
+  \ / o-o  |      o-o  OO   O-o    o-o   o-O o-o o-o 
+   o  |  | |    | |  | | \  |    | |  | |  | |-' |   
+  / \ o  o O---o| o  o o  o o    | o  o  o-o o-o o   
+                |                |                   
+                ' by @Xnl-h4ck3r '              v2.5
+
+Processing files in directory js-files/:
+
+There are no files with a size greater than 500 Mb to process (you can change the limit with -mfs).
+
+Potential unique links found for js-files/: 0 🤘
+
+Potential parameters found for js-files/: 0 🤘
+
+[Done]
+[+] subs enum: endpoints [0]                                                                                                                                
+[+] Probing for live subdomains from new subdomains with httpx: /home/kali/git/init-recon/init-recon.sh: line 182: anew: command not found
+[0]
+[0]                                                                                                                                                         
+Total valid subs: 0
+Total valid IPs: 0
+[+] Finding cloud-keys from endpoints: [Done]
+[+] Finding cloud-keys from js files: [Done]                                                                                                                
+[+] Probing for live urls: httpx [0]                                                                                                                        
+[+] Finding more params: arjun /home/kali/git/init-recon/init-recon.sh: line 247: arjun: command not found
+/home/kali/git/init-recon/init-recon.sh: line 248: arjun: command not found                                                                                 
+/home/kali/git/init-recon/init-recon.sh: line 249: arjun: command not found                                                                                 
+/home/kali/git/init-recon/init-recon.sh: line 250: arjun: command not found                                                                                 
+sort: cannot read: 'urls.params-arjun-*': No such file or directory
+[0]                                                                                                                                                         
+[+] Greping paths, params keys, keypairs: unfurl
+cat: urls.params-arjun-GET: No such file or directory                                                                                                       
+cat: urls.params-arjun-GET: No such file or directory                                                                                                       
+cat: urls.params-arjun-GET: No such file or directory
+[+] Greping urls with params: [0]
+[+] Gf patterning urls: gf
+mkdir: cannot create directory 'gf-patterns': File exists
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+grep: urls.http-auth: input file is also the output
+cat: ../urls.fuzz: No such file or directory
+grep: urls.: input file is also the output
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+grep: amass-active/indexes.bolt: binary file matches
+grep: urls.ip: input file is also the output
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+cat: ../urls.fuzz: No such file or directory
+grep: urls.base64: input file is also the output
+cat: ../urls.fuzz: No such file or directory
+[+] Running Nuclei
+/home/kali/git/init-recon/init-recon.sh: line 291: nuclie: command not found
+mkdir: cannot create directory 'automated-test': File exists
+[+] Running Automated Tests: /home/kali/bug-hunting/recon
+
+[+] Redirect Test: 
+[+] XSS Test: 
+cat: ../urls.fuzz: No such file or directory
+[+] SQLi Test: nuclie/home/kali/git/init-recon/init-recon.sh: line 306: nuclie: command not found
+/home/kali/git/init-recon/init-recon.sh: line 314: syntax error near unexpected token `fi'
+/home/kali/git/init-recon/init-recon.sh: line 314: `fi'
+

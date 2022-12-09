@@ -95,9 +95,10 @@ fi
 # arjun
 if ! command -v arjun > /dev/null 2>&1; then
     pip3 install arjun
+    sudo apt install arjun &>/dev/null
 fi
 
-# waymore
+# waymore.py
 if ! command -v waymore.py > /dev/null 2>&1; then
     cd
     mkdir tools
@@ -107,7 +108,7 @@ if ! command -v waymore.py > /dev/null 2>&1; then
     sudo python setup.py install
     chmod +x waymore.py
     cd
-    sudo ln -s ~/tools/waymore/waymore.py /opt/bin
+    sudo ln -s /home/$(whoami)/tools/waymore/waymore.py /opt/bin
 fi
 
 # xnLinkFinder.py
@@ -135,6 +136,11 @@ if ! command -v naabu > /dev/null 2>&1; then
     go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
 fi
 
+# anew
+if ! command -v anew > /dev/null 2>&1; then
+    go install -v github.com/tomnomnom/anew@latest
+fi
+
 ### Wordlists ###
 # gf-patterns
 
@@ -144,7 +150,7 @@ sudo apt install seclists
 # assestnotes wordlists
 
 ### Print any uninstalled tools ###
-tools=("findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
+tools=("anew" "naabu" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
 
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then

@@ -138,10 +138,10 @@ sleep 5
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
 gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 &>/dev/null
 if [ $FLAG = "t" ]; then
-    sort -u urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u > urls.active &>/dev/null
+    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u > urls.active &>/dev/null
 else
     roots=$(cat $OPTARG | while read line; do echo -n "$line|"; done | sed 's/.$//')
-    sort -u urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u > urls.active &>/dev/null
+    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u > urls.active &>/dev/null
 fi
 tput setaf 3; echo "[$(cat urls.active | wc -l)]"
 sort -u urls.passive urls.active > urls.all && rm urls.passive urls.active
@@ -162,7 +162,7 @@ cd ..
 #################### XNLinkFinder ####################
 tput setaf 42; echo -n "[+] Endpoints enum: JS "
 # Find urls in JS Files
-xnLinkFinder.py -i js-files -o urls.linkfinder -op params.linkfinder
+xnLinkFinder.py -i js-files -o urls.linkfinder -op params.linkfinder &>/dev/null
 tput setaf 3; echo "[Done]"
 ###################### JS Enumeration Ends #################################
 
@@ -266,7 +266,7 @@ sleep 3
 
 ########### Replace params values as FUZZ with qsreplace ###########
 tput setaf 42; echo "[+] Gf patterning urls: gf"
-mkdir gf-patterns && cd gf-patterns
+mkdir gf-patterns && cd gf-patterns &>/dev/null
 cat ../urls.fuzz | gf xss > urls.xss
 cat ../urls.fuzz | gf ssrf > urls.ssrf
 cat ../urls.fuzz | grep -i "=\/" > urls.take-paths
@@ -288,7 +288,7 @@ sleep 3
 
 ########### Nuclei ###########
 tput setaf 42; echo "[+] Running Nuclei"
-nuclie -l subs.txt -o nuclei.log >/dev/null
+nuclei -l subs.txt -o nuclei.log >/dev/null
 
 ########### Automated tests on gf pattern urls ###########
 mkdir automated-test && cd automated-test
@@ -302,8 +302,8 @@ cat ../urls.fuzz | kxss | sed s'/URL: //'| qsreplace > ../urls.params-reflect
 dalfox file ../urls.params-reflect -F -o xss-1.log &>/dev/null
 dalfox file gf-patterns/urls.xss -F -o xss-2.log &>/dev/null
 sleep 180
-tput setaf 42; echo -n "[+] SQLi Test: nuclie"
-nuclie
+tput setaf 42; echo -n "[+] SQLi Test: nuclei"
+nuclei
 
 ###################### Dorks Generation Starts ######################
 ########### Manual shodan dorks file ###########
