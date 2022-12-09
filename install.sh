@@ -98,6 +98,11 @@ if ! command -v arjun > /dev/null 2>&1; then
     sudo apt install arjun &>/dev/null
 fi
 
+# Dalfox
+if ! command -v dalfox > /dev/null 2>&1; then
+    go install github.com/hahwul/dalfox/v2@latest
+fi
+
 # waymore.py
 if ! command -v waymore.py > /dev/null 2>&1; then
     cd
@@ -150,7 +155,7 @@ sudo apt install seclists
 # assestnotes wordlists
 
 ### Print any uninstalled tools ###
-tools=("anew" "naabu" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
+tools=("anew" "naabu" "dalfox" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
 
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then

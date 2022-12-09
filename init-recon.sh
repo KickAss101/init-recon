@@ -92,20 +92,30 @@ tput setaf 3; echo "[$(cat subs.all | wc -l)]"
 ########### Resolving Subs & gather IPs with dnsx ###########
 tput setaf 42; echo -n "[+] Alive subs from permutations : "
 # puredns
-cat subs.all| puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write subs.puredns &>/dev/null
+cat subs.all | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
-# Extract non CDN IPs
-cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u > IPs.live && rm subs.all subs.puredns
+
+# Alive subs after dnsx
+cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.alive
+tput setaf 3; echo "[$(cat subs.alive | wc -l)]"
+
+# Wildcard domains
+tput setaf 42; echo -n "[+] Alive subs from permutations : "
+tput setaf 3; echo "[$(cat subs.wildcards | wc -l)]"
+
+# Non CDN IPs
+tput setaf 42; echo -n "[+] IPs Found : "
+cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u >> IPs.live && rm subs.all subs.puredns
 tput setaf 3; echo "[$(cat IPs.live | wc -l)]"
-# Extract resolved subs
-cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u > subs.alive
+
 # Check http ports with httpx
 tput setaf 42; echo -n "[+] subs resolve: httpx "
 httpx -l subs.alive -silent -nc -t 20 -rl 80 -o subs.httpx &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx | wc -l)]"
+
 # IPs to check in shodan
-cat IPs.live | xargs -I {}  echo https://www.shodan.io/host/\{\} > IPs.shodan-urls
+cat IPs.live | xargs -I {}  echo https://www.shodan.io/host/\{\} >> IPs.shodan-urls
 sleep 5
 ################################# Subdomain enumeration Ends #################################
 
@@ -138,10 +148,10 @@ sleep 5
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
 gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 &>/dev/null
 if [ $FLAG = "t" ]; then
-    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u > urls.active &>/dev/null
+    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
 else
     roots=$(cat $OPTARG | while read line; do echo -n "$line|"; done | sed 's/.$//')
-    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u > urls.active &>/dev/null
+    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u >> urls.active
 fi
 tput setaf 3; echo "[$(cat urls.active | wc -l)]"
 sort -u urls.passive urls.active > urls.all && rm urls.passive urls.active
@@ -169,21 +179,21 @@ tput setaf 3; echo "[Done]"
 ########### Grep subdomains from Endpoints ###########
 tput setaf 42; echo -n "[+] subs enum: endpoints "
 if [ $FLAG = "t" ]; then
-    cat urls.all urls.linkfinder &>/dev/null | grep -iE "$OPTARG" | unfurl -u domains > subs.new
+    cat urls.all urls.linkfinder | grep -iE "$OPTARG" | unfurl -u domains > subs.new
 else
-    cat urls.all urls.linkfinder &>/dev/null | grep -iE "($roots)" | unfurl -u domains > subs.new
+    cat urls.all urls.linkfinder | grep -iE "($roots)" | unfurl -u domains > subs.new
 fi
 tput setaf 3; echo "[$(cat subs.new | wc -l)]"
 sleep 5
 
 ########### Probing for live domains from endpoints and js files with httpx ###########
-tput setaf 42; echo -n "[+] Probing for live subdomains from new subdomains with httpx: "
+tput setaf 42; echo -n "[+] Probing for live subs with httpx: "
 # Save only newly found subs
 cat subs.new | anew -d subs.alive > subs.ripgen
 # DNS Permutations
 ripgen -d subs.ripgen -w $permutations > subs.all-unsort
 # Resolve subs with puredns
-cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write subs.puredns &>/dev/null
+cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # Get A records, CDN info with DNSx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx-2.json &>/dev/null
 rm subs.puredns subs.new subs.all-unsort subs.ripgen
@@ -200,8 +210,8 @@ tput setaf 3; echo "[$(sort -u subs.httpx-2 | wc -l)]"
 sort -u subs.httpx subs.httpx-2 > subs.httpx-final && rm subs.httpx subs.httpx-2
 sort -u subs.alive subs.alive-2 > subs.txt && rm subs.alive subs.alive-2
 sort IPs.live IPs.new > IPs.txt && rm IPs.live IPs.new
-echo "Total valid subs: $(cat subs.txt | wc -l)" | lolcat -ia
-echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat -ia
+echo "Total valid subs: $(cat subs.txt | wc -l)" | lolcat -i
+echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat -i
 sleep 5
 
 ### Portscan with naabu for subs ###
@@ -228,10 +238,10 @@ sleep 3
 
 ### Grep cloud-keys from JS files ###
 tput setaf 42; echo -n "[+] Finding cloud-keys from js files: "
-cat js-files/* &>/dev/null | gf aws-keys | sort -u >> cloud-keys/js.aws-keys &>/dev/null
-cat js-files/* &>/dev/null | gf firebase | sort -u >> cloud-keys/js.firebase &>/dev/null
-cat js-files/* &>/dev/null | gf s3-buckets | sort -u >>  cloud-keys/js.s3-buckets &>/dev/null
-cat js-files/* &>/dev/null | gf sec | sort -u >> cloud-keys/js.sec &>/dev/null
+cat js-files/* | gf aws-keys | sort -u >> cloud-keys/js.aws-keys
+cat js-files/* | gf firebase | sort -u >> cloud-keys/js.firebase
+cat js-files/* | gf s3-buckets | sort -u >>  cloud-keys/js.s3-buckets
+cat js-files/* | gf sec | sort -u >> cloud-keys/js.sec
 tput setaf 3; echo "[Done]"
 sleep 3
 
@@ -241,22 +251,22 @@ cat urls.all | qsreplace | sort -u | httpx -silent -nc -rl 100 -o urls.live >/de
 tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
-################### Need More Tests ###################
 ### Find more params ###
-tput setaf 42; echo -n "[+] Finding more params: arjun "
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET  >/dev/null && sleep 180
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST >/dev/null && sleep 180
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-JSON -m JSON >/dev/null && sleep 180
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-XML -m XML >/dev/null
-tput setaf 3; echo "[$(sort -u urls.params-arjun-* | wc -l)]"
-sleep 3
+# tput setaf 42; echo -n "[+] Finding more params: arjun "
+# arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET  >/dev/null && sleep 180
+# arjun -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST >/dev/null && sleep 180
+# arjun -q -i urls.live -d 1 -oT urls.params-arjun-JSON -m POST-JSON >/dev/null && sleep 180
+# arjun -q -i urls.live -d 1 -oT urls.params-arjun-XML -m POST-XML >/dev/null
+# tput setaf 3; echo "[$(sort -u urls.params-arjun-* | wc -l)]"
+# sleep 3
 
 ########### Grep endpoints, params, values, keypairs ###########
-tput setaf 42; echo "[+] Greping paths, params keys, keypairs: unfurl"
-cat urls.params-arjun-GET | unfurl -u paths >> paths
-cat urls.params-arjun-GET | unfurl -u keys >> params
-cat urls.params-arjun-GET | unfurl -u keypairs >> keypairs
-sleep 3
+# tput setaf 42; echo "[+] Greping paths, params keys, keypairs: unfurl"
+# mkdir unfurl
+# cat urls.params-arjun-GET | unfurl -u paths >> unfurl/paths.txt
+# cat urls.params-arjun-GET | unfurl -u keys >> unfurl/params.txt
+# cat urls.params-arjun-GET | unfurl -u keypairs >> unfurl/keypairs.txt
+# sleep 3
 
 ########### Grep urls with params ###########
 tput setaf 42; echo -n "[+] Greping urls with params: "
@@ -266,7 +276,7 @@ sleep 3
 
 ########### Replace params values as FUZZ with qsreplace ###########
 tput setaf 42; echo "[+] Gf patterning urls: gf"
-mkdir gf-patterns && cd gf-patterns &>/dev/null
+mkdir gf-patterns && cd gf-patterns
 cat ../urls.fuzz | gf xss > urls.xss
 cat ../urls.fuzz | gf ssrf > urls.ssrf
 cat ../urls.fuzz | grep -i "=\/" > urls.take-paths
@@ -286,24 +296,21 @@ cd ..
 sleep 3
 ###################### Greping Values Ends ######################
 
-########### Nuclei ###########
-tput setaf 42; echo "[+] Running Nuclei"
-nuclei -l subs.txt -o nuclei.log >/dev/null
+# Find interesting subs to test
+cat subs.httpx-final | gf interestingsubs > subs.interesting
 
 ########### Automated tests on gf pattern urls ###########
 mkdir automated-test && cd automated-test
 tput setaf 42; echo "[+] Running Automated Tests: $(pwd)"
-echo
-tput setaf 42; echo "[+] Redirect Test: "
+# echo
+# tput setaf 42; echo "[+] Redirect Test: "
 
-sleep 180
+# sleep 180
 tput setaf 42; echo "[+] XSS Test: "
-cat ../urls.fuzz | kxss | sed s'/URL: //'| qsreplace > ../urls.params-reflect
-dalfox file ../urls.params-reflect -F -o xss-1.log &>/dev/null
-dalfox file gf-patterns/urls.xss -F -o xss-2.log &>/dev/null
+cat ../urls.fuzz | kxss | sed s'/URL: //'| qsreplace >> ../urls.params-reflect
+dalfox file ../urls.params-reflect --blind $blindXSS -F -o xss-1.log &>/dev/null
+dalfox file gf-patterns/urls.xss --blind $blindXSS -F -o xss-2.log &>/dev/null
 sleep 180
-tput setaf 42; echo -n "[+] SQLi Test: nuclei"
-nuclei
 
 ###################### Dorks Generation Starts ######################
 ########### Manual shodan dorks file ###########
@@ -331,6 +338,6 @@ sleep 3
 
 
 ########### WhatWeb Recon ###########
-tput setaf 42; echo "[+] Tech stack recon: Whatweb"
-whatweb -i subs-interesting.txt --log-brief=whatweb-brief >/dev/null
-sleep 5
+# tput setaf 42; echo "[+] Tech stack recon: Whatweb"
+# whatweb -i subs-interesting.txt --log-brief=whatweb-brief >/dev/null
+# sleep 5
