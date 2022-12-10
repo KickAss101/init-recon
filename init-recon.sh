@@ -82,7 +82,7 @@ tput setaf 3; echo "[$(cat subs.github | wc -l)]"
 sleep 5
 
 ########### Subs permutations with ripgen ###########
-tput setaf 42; echo -n "[+] subs permutations: ripgen (best to run on VPS)"
+tput setaf 42; echo -n "[+] subs permutations: ripgen "
 sort -u subs.* > subs-all && rm subs.*
 ripgen -d subs-all -w $permutations > subs.all-unsort
 sort -u subs.all-unsort > subs.all && rm subs.all-unsort
@@ -90,7 +90,7 @@ rm subs-all
 tput setaf 3; echo "[$(cat subs.all | wc -l)]"
 
 ########### Resolving Subs & gather IPs with dnsx ###########
-tput setaf 42; echo -n "[+] Alive subs from permutations : "
+tput setaf 42; echo -n "[+] Alive subs from permutations (best to run on VPS) : "
 # puredns
 cat subs.all | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
@@ -254,21 +254,21 @@ tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
 ### Find more params ###
-# tput setaf 42; echo -n "[+] Finding more params: arjun "
-# arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET  >/dev/null && sleep 180
-# arjun -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST >/dev/null && sleep 180
+tput setaf 42; echo -n "[+] Finding more params: arjun "
+arjun --passive -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET -t 15  >/dev/null && sleep 60
+arjun --passive -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST -t 15 >/dev/null
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-JSON -m POST-JSON >/dev/null && sleep 180
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-XML -m POST-XML >/dev/null
-# tput setaf 3; echo "[$(sort -u urls.params-arjun-* | wc -l)]"
-# sleep 3
+tput setaf 3; echo "[Done]"
+sleep 3
 
 ########### Grep endpoints, params, values, keypairs ###########
-# tput setaf 42; echo "[+] Greping paths, params keys, keypairs: unfurl"
-# mkdir unfurl
-# cat urls.params-arjun-GET | unfurl -u paths >> unfurl/paths.txt
-# cat urls.params-arjun-GET | unfurl -u keys >> unfurl/params.txt
-# cat urls.params-arjun-GET | unfurl -u keypairs >> unfurl/keypairs.txt
-# sleep 3
+tput setaf 42; echo "[+] Greping paths, params keys, keypairs: unfurl"
+mkdir unfurl
+cat urls.params-arjun-GET | unfurl -u paths >> unfurl/paths.txt
+cat urls.params-arjun-GET | unfurl -u keys >> unfurl/params.txt
+cat urls.params-arjun-GET | unfurl -u keypairs >> unfurl/keypairs.txt
+sleep 3
 
 ########### Grep urls with params ###########
 tput setaf 42; echo -n "[+] Greping urls with params: "
@@ -328,24 +328,13 @@ sleep 180
 
 
 ###################### Dorks Generation Starts ######################
-########### Manual shodan dorks file ###########
+########### shodan dorks file ###########
 if [ $FLAG = "t" ]; then
     cat .shodan.dorks | sed 's|${target}|$OPTARG|'  > shodan-dorks.txt
 else
-    cat .shodan.dorks | while read line; do sed 's|${target}|$line|' done  > shodan-dorks-$line.txt
+    cat .shodan.dorks | while read line; do sed 's|${target}|$line|'; done  > shodan-dorks-$line.txt
 fi
 sleep 3
-
-########### Manual GitHub dorks file ###########
-if [ $FLAG = "t" ]; then
-    cat .github.dorks | sed 's|${target}|$OPTARG|'  > github-dorks.txt
-else
-    cat .github.dorks | while read line; do sed 's|${target}|$line|'  done > github-dorks-$line.txt
-fi
-sleep 3
-
-########### Manual Search Engine dorks file ########### TO-DO
-
 ###################### Dorks Generation Ends ######################
 
 
@@ -353,6 +342,7 @@ sleep 3
 
 
 ########### WhatWeb Recon ###########
+# Fingerprint interesting subs and save subs to new file which don't have WAF
 # tput setaf 42; echo "[+] Tech stack recon: Whatweb"
 # whatweb -i subs-interesting.txt --log-brief=whatweb-brief >/dev/null
 # sleep 5
