@@ -272,8 +272,14 @@ sleep 3
 
 ########### Grep urls with params ###########
 tput setaf 42; echo -n "[+] Greping urls with params: "
-cat urls.live | grep "=" > urls.params | qsreplace FUZZ | sort -u > urls.fuzz
+cat urls.live | grep "=" | sort -u urls.params | qsreplace FUZZ | sort -u > urls.fuzz
 tput setaf 3; echo "[$(cat urls.fuzz | wc -l)]"
+sleep 3
+
+########### Run urls against nuclei ###########
+tput setaf 42; echo -n "[+] Run urls against nuclei: "
+nuclei -l urls.params -fr -es info -o urls.nuclei
+tput setaf 3; echo "[Done]"
 sleep 3
 
 ########### Replace params values as FUZZ with qsreplace ###########
