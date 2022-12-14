@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/usr/bin/bash
 
 usage() 
 { 
@@ -8,8 +8,8 @@ usage()
     exit 1
 }
 
-########### command line Arguments ###########
-getopts t:f:h FLAG;
+# command line Arguments
+getopts t:f:h: FLAG;
 case $FLAG in
     t) t=$OPTARG;;
     f) f=$OPTARG;;
@@ -18,7 +18,7 @@ esac
 
 dir=$(echo $OPTARG | cut -d "." -f 1)
 
-########### Create the output directory if it doesn't exist
+# Create the output directory if it doesn't exist
 if [ ! -d ~/bug-hunting ];then
     mkdir ~/bug-hunting
 fi
@@ -29,98 +29,103 @@ if [ ! -d ~/bug-hunting/recon/$dir ];then
     mkdir ~/bug-hunting/recon/$dir
 fi
 
-########### Setting flags for file or domain | reduces code ###########
+# Setting flags for file or domain | reduces code
 if [ $FLAG = "t" ]; then
     findomain_flag=t
     amass_flag=d
+    subfinder_flag=d
 else
     findomain_flag=f
     amass_flag=df
+    subfinder_flag=dL
     cp $OPTARG ~/bug-hunting/recon/$dir
 fi
 
-########### Print the name of the script with figlet
+# Print the name of the script with figlet
 echo init-recon.sh | figlet -c| lolcat -ad 2
 
-########### Print the output directory
+# Print the output directory
 cd ~/bug-hunting/recon/$dir
 echo
-echo "+++++ Storing data here: $(pwd) +++++" | lolcat -ia
+echo "+++++ Storing data here: $(pwd) +++++" | lolcat -i
 echo
 
-################################# Variables & Wordlists #################################
+# Variables & Wordlists
 nameservers=~/git/wordlists/ALL.TXTs/nameservers.txt
 permutations=~/git/wordlists/ALL.TXTs/permutations.txt
 waymore_path=~/tools/waymore/results
 
 ################################# Subdomain enumeration Starts #################################
-########### sub enum with findomain, subfinder, amass passive ###########
-tput setaf 42; echo -n "[+] subs enum: findomain, subfinder, amass passive "
-findomain -$findomain_flag $OPTARG --external-subdomains -q --lightweight-threads 25 -u subs.findomain >/dev/null
-sort -u external_subdomains/amass/*.txt external_subdomains/subfinder/*.txt >> subs.findomain
-rm -rf external_subdomains
-tput setaf 3; echo "[$(sort -u subs.findomain | wc -l)]"
-sleep 5
+# subdomain enum with findomain
+tput setaf 42; echo -n "[+] subs enum: findomain "
+findomain -$findomain_flag $OPTARG -q --lightweight-threads 25 -u subs.findomain &>/dev/null
+tput setaf 3; echo "[$(sort -u subs.findomain 2>/dev/null | wc -l)]"
+sleep 2
 
-########### subdomain enumeration with amass active ###########
+# subdomain enum with subfinder
+tput setaf 42; echo -n "[+] subs enum: findomain "
+subfinder -$subfinder_flag $OPTARG -silent -t 25 >> subs.subfinder
+tput setaf 3; echo "[$(sort -u subs.subfinder 2>/dev/null | wc -l)]"
+sleep 2
+
+# subdomain enum with amass active
 tput setaf 42; echo -n "[+] subs enum: amass active bruteforce "
-amass enum -$amass_flag $OPTARG -src -active -max-depth 5 -brute -silent -dir ./amass-active
+amass enum -$amass_flag $OPTARG -src -passive -active -max-depth 5 -brute -silent -dir ./amass-active
 cat amass-active/amass.json | jq .name -r | sort -u > subs.amass
-tput setaf 3; echo "[$(cat subs.amass | wc -l)]"
-sleep 5
+tput setaf 3; echo "[$(cat subs.amass 2>/dev/null | wc -l)]"
+sleep 2
 
-########### subdomain enumeration with github-subdomains ###########
+# subdomain enum with github-subdomains
 tput setaf 42; echo -n "[+] subs enum: github-subdomains "
 if [ $FLAG = "t" ]; then
-    github-subdomains -d $OPTARG -o subs.github-unsort >/dev/null
+    github-subdomains -d $OPTARG -o subs.github-unsort &>/dev/null
     sort -u subs.github-unsort > subs.github && rm subs.github-unsort
 else
     cat $OPTARG | while read line; do github-subdomains -d $line -o subs-$line.github-unsort; done >/dev/null
-    sort -u subs-*.github-unsort > subs.github && rm subs-*.github-unsort
+    sort -u subs-*.github-unsort >> subs.github && rm subs-*.github-unsort
 fi
-tput setaf 3; echo "[$(cat subs.github | wc -l)]"
-sleep 5
+tput setaf 3; echo "[$(cat subs.github 2>/dev/null | wc -l)]"
+sleep 2
 
-########### Subs permutations with ripgen ###########
+# subdomain permutations with ripgen 
 tput setaf 42; echo -n "[+] subs permutations: ripgen "
-sort -u subs.* > subs-all && rm subs.*
-ripgen -d subs-all -w $permutations > subs.all-unsort
-sort -u subs.all-unsort > subs.all && rm subs.all-unsort
-rm subs-all
-tput setaf 3; echo "[$(cat subs.all | wc -l)]"
+sort -u subs.* >> subs-all && rm subs.*
+cat subs-all | ripgen -w $permutations >> subs.all-unsort
+sort -u subs.all-unsort >> subs.all && rm subs.all-unsort subs-all
+tput setaf 3; echo "[$(cat subs.all 2>/dev/null | wc -l)]"
 
-########### Resolving Subs & gather IPs with dnsx ###########
+# Resolving subdomains & gather IPs with dnsx
 tput setaf 42; echo -n "[+] Alive subs from permutations (best to run on VPS) : "
 # puredns
-cat subs.all | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
+cat subs.all | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
-cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
+cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 180 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
 
 # Alive subs after dnsx
 cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.alive
-tput setaf 3; echo "[$(cat subs.alive | wc -l)]"
+tput setaf 3; echo "[$(cat subs.alive 2>/dev/null | wc -l)]"
 
 # Wildcard domains
-tput setaf 42; echo -n "[+] Wildcard subs : "
-tput setaf 3; echo "[$(cat subs.wildcards | wc -l)]"
+tput setaf 42; echo -n "[+] Wildcard domains : "
+tput setaf 3; echo "[$(cat subs.wildcards 2>/dev/null | wc -l)]"
 
 # Non CDN IPs
 tput setaf 42; echo -n "[+] Non CDN IPs : "
 cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u >> IPs.live && rm subs.all subs.puredns
-tput setaf 3; echo "[$(cat IPs.live | wc -l)]"
+tput setaf 3; echo "[$(cat IPs.live 2>/dev/null | wc -l)]"
 
 # Check http ports with httpx
 tput setaf 42; echo -n "[+] subs resolve: httpx "
 httpx -l subs.alive -silent -nc -t 20 -rl 80 -o subs.httpx &>/dev/null
-tput setaf 3; echo "[$(sort -u subs.httpx | wc -l)]"
+tput setaf 3; echo "[$(sort -u subs.httpx 2>/dev/null | wc -l)]"
 
 # IPs to check in shodan
-cat IPs.live | xargs -I {}  echo https://www.shodan.io/host/\{\} >> IPs.shodan-urls
-sleep 5
+cat IPs.live | xargs -I {} echo https://www.shodan.io/host/\{\} >> IPs.shodan-urls
+sleep 2
 ################################# Subdomain enumeration Ends #################################
 
 ################################# Endpoints enumeration Starts #################################
-########### Passive URL Enumeration with waymore ###########
+# Passive URL Enumeration with waymore
 tput setaf 42; echo -n "[+] Passive URL enum: waymore "
 waymore.py -i $OPTARG -mode U -ow -p 5 -lcc 45 &>/dev/null
 if [ $FLAG = "t" ]; then
@@ -129,10 +134,10 @@ else
     cat $OPTARG | while read line; do cat $waymore_path/$line/waymore.txt >> urls.waymore; done
 fi
 # Clean up
-tput setaf 3; echo "[$(cat urls.waymore | wc -l)]"
+tput setaf 3; echo "[$(cat urls.waymore 2>/dev/null | wc -l)]"
 sleep 5
 
-########### Endpoints enumeration with github-endpoints ###########
+# Endpoints enumeration with github-endpoints
 tput setaf 42; echo -n "[+] Endpoints enum: github-endpoints "
 if [ $FLAG = "t" ]; then
     github-endpoints -d $OPTARG -o urls.github-unsort &>/dev/null
@@ -141,25 +146,25 @@ else
 fi
 # Clean up
 sort -u urls.waymore urls*.github-unsort > urls.passive && rm urls.github-unsort urls.waymore
-tput setaf 3; echo "[$(cat urls.passive | wc -l)]"
+tput setaf 3; echo "[$(cat urls.passive 2>/dev/null | wc -l)]"
 sleep 5
 
-########### Active URL Enumeration with gospider ###########
+# Active URL Enumeration with gospider
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
-gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 &>/dev/null
+gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2
 if [ $FLAG = "t" ]; then
     cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
 else
     roots=$(cat $OPTARG | while read line; do echo -n "$line|"; done | sed 's/.$//')
     cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u >> urls.active
 fi
-tput setaf 3; echo "[$(cat urls.active | wc -l)]"
+tput setaf 3; echo "[$(cat urls.active 2>/dev/null | wc -l)]"
 sort -u urls.passive urls.active > urls.all && rm urls.passive urls.active
 sleep 5
 ################################# Endpoints enumeration Ends #################################
 
 ################################# JS Enumeration Starts #################################
-########### JS files Enumeration ###########
+# JS files Enumeration
 sort -u urls.all | grep -i ".js"  > urls.js
 
 # Make directories to store js files and to store any keys found from them
@@ -169,7 +174,7 @@ cd js-files
 cat ../urls.js | xargs -I {} wget {} &>/dev/null
 cd ..
 
-#################### XNLinkFinder ####################
+# XNLinkFinder
 tput setaf 42; echo -n "[+] Endpoints enum: JS "
 # Find urls in JS Files
 xnLinkFinder.py -i js-files -o urls.linkfinder -op params.linkfinder &>/dev/null
@@ -249,7 +254,7 @@ sleep 3
 
 ### Probing for live urls with httpx ###
 tput setaf 42; echo -n "[+] Probing for live urls: httpx "
-cat urls.all | qsreplace | sort -u | httpx -silent -nc -rl 100 -o urls.live >/dev/null
+cat urls.all | qsreplace | sort -u | httpx -silent -nc -rl 100 -o urls.live &>/dev/null
 tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
