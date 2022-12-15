@@ -71,7 +71,7 @@ sleep 2
 
 # subdomain enum with amass active
 tput setaf 42; echo -n "[+] subs enum: amass "
-amass enum -$amass_flag $OPTARG -src -passive -active -max-depth 5 -brute -silent -dir ./amass-active
+amass enum -$amass_flag $OPTARG -src -passive -alts -active -max-depth 5 -brute -silent -dir ./amass-active
 cat amass-active/amass.json | jq .name -r | sort -u > subs/subs.amass
 tput setaf 3; echo "[$(cat subs/subs.amass 2>/dev/null | wc -l)]"
 sleep 2
@@ -98,9 +98,9 @@ tput setaf 3; echo "[$(cat subs.altdns 2>/dev/null | wc -l)]"
 # Resolving subdomains & gather IPs with dnsx
 tput setaf 42; echo -n "[+] Alive subs from permutations (best to run on VPS) : "
 # puredns
-cat subs.altdns subs.1 | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
+cat subs.altdns | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
-cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 180 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
+cat subs.puredns subs.1 | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 180 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
 
 # Alive subs after dnsx
 cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.live
@@ -112,7 +112,7 @@ tput setaf 3; echo "[$(cat subs.wildcards 2>/dev/null | wc -l)]"
 
 # Non CDN IPs
 tput setaf 42; echo -n "[+] Non CDN IPs : "
-cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u >> IPs.live && rm subs.all subs.puredns
+cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u >> IPs.live && rm subs.altdns subs.puredns
 tput setaf 3; echo "[$(cat IPs.live 2>/dev/null | wc -l)]"
 
 # CDN IPs
