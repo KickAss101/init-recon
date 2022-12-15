@@ -56,54 +56,55 @@ permutations=~/git/wordlists/ALL.TXTs/permutations.txt
 waymore_path=~/tools/waymore/results
 
 ################################# Subdomain enumeration Starts #################################
+mkdir subs
 # subdomain enum with findomain
 tput setaf 42; echo -n "[+] subs enum: findomain "
-findomain -$findomain_flag $OPTARG -q --lightweight-threads 25 -u subs.findomain &>/dev/null
-tput setaf 3; echo "[$(sort -u subs.findomain 2>/dev/null | wc -l)]"
+findomain -$findomain_flag $OPTARG -q --lightweight-threads 25 -u subs/subs.findomain &>/dev/null
+tput setaf 3; echo "[$(sort -u subs/subs.findomain 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with subfinder
 tput setaf 42; echo -n "[+] subs enum: subfinder "
-subfinder -$subfinder_flag $OPTARG -silent -t 25 >> subs.subfinder
-tput setaf 3; echo "[$(sort -u subs.subfinder 2>/dev/null | wc -l)]"
+subfinder -$subfinder_flag $OPTARG -silent -t 25 >> subs/subs.subfinder
+tput setaf 3; echo "[$(sort -u subs/subs.subfinder 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with amass active
 tput setaf 42; echo -n "[+] subs enum: amass "
-amass enum -$amass_flag $OPTARG -src -passive -active -max-depth 5 -brute -silent -dir ./amass-active
-cat amass-active/amass.json | jq .name -r | sort -u > subs.amass
-tput setaf 3; echo "[$(cat subs.amass 2>/dev/null | wc -l)]"
+amass enum -$amass_flag $OPTARG -src -passive -ip -active -max-depth 5 -brute -silent -dir ./amass-active
+cat amass-active/amass.json | jq .name -r | sort -u > subs/subs.amass
+tput setaf 3; echo "[$(cat subs/subs.amass 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with github-subdomains
 tput setaf 42; echo -n "[+] subs enum: github-subdomains "
 if [ $FLAG = "t" ]; then
     github-subdomains -d $OPTARG -o subs.github-unsort &>/dev/null
-    sort -u subs.github-unsort > subs.github && rm subs.github-unsort
+    sort -u subs.github-unsort > subs/subs.github && rm subs.github-unsort
 else
     cat $OPTARG | while read line; do github-subdomains -d $line -o subs-$line.github-unsort; done >/dev/null
-    sort -u subs-*.github-unsort >> subs.github && rm subs-*.github-unsort
+    sort -u subs-*.github-unsort >> subs/subs.github && rm subs-*.github-unsort
 fi
-tput setaf 3; echo "[$(cat subs.github 2>/dev/null | wc -l)]"
+tput setaf 3; echo "[$(cat subs/subs.github 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain permutations with ripgen 
 tput setaf 42; echo -n "[+] subs permutations: ripgen "
-sort -u subs.* >> subs-all && rm subs.*
-cat subs-all | ripgen -w $permutations >> subs.all-unsort
-sort -u subs.all-unsort >> subs.all && rm subs.all-unsort subs-all
-tput setaf 3; echo "[$(cat subs.all 2>/dev/null | wc -l)]"
+sort -u subs/* >> subs.1
+cat subs.1 | ripgen -w $permutations >> subs.all-unsort
+sort -u subs.all-unsort >> subs.ripgen && rm subs.all-unsort
+tput setaf 3; echo "[$(cat subs.ripgen 2>/dev/null | wc -l)]"
 
 # Resolving subdomains & gather IPs with dnsx
 tput setaf 42; echo -n "[+] Alive subs from permutations (best to run on VPS) : "
 # puredns
-cat subs.all | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
+cat subs.ripgen subs.1 | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 180 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
 
 # Alive subs after dnsx
-cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.alive
-tput setaf 3; echo "[$(cat subs.alive 2>/dev/null | wc -l)]"
+cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.live
+tput setaf 3; echo "[$(cat subs.live 2>/dev/null | wc -l)]"
 
 # Wildcard domains
 tput setaf 42; echo -n "[+] Wildcard domains : "
@@ -114,9 +115,14 @@ tput setaf 42; echo -n "[+] Non CDN IPs : "
 cat subs.dnsx.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u >> IPs.live && rm subs.all subs.puredns
 tput setaf 3; echo "[$(cat IPs.live 2>/dev/null | wc -l)]"
 
+# CDN IPs
+tput setaf 42; echo -n "[+] CDN IPs : "
+cat subs.dnsx.json | jq '. | select(.cdn == true) | .a[]' | tr -d '"' | sort -u >> IPs.cdn
+tput setaf 3; echo "[$(cat IPs.cdn 2>/dev/null | wc -l)]"
+
 # Check http ports with httpx
 tput setaf 42; echo -n "[+] subs resolve: httpx "
-httpx -l subs.alive -silent -nc -t 20 -rl 80 -o subs.httpx &>/dev/null
+httpx -l subs.live -x GET,POST -silent -nc -rl 80 -o subs.httpx &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx 2>/dev/null | wc -l)]"
 
 # IPs to check in shodan
@@ -171,8 +177,8 @@ sort -u urls.all | grep -i ".js"  > urls.js
 mkdir js-files cloud-keys &>/dev/null
 # Download JS Files from .js urls
 cd js-files
-tput setaf 42; echo -n "[+] Downloading js files ... "
-cat ../urls.js | xargs -I {} wget {} &>/dev/null
+tput setaf 42; echo -n "[+] Downloading js files... "
+pv ../urls.js | while read line; do wget $line; done &>/dev/null
 tput setaf 3; echo "[Done]"
 cd ..
 
@@ -196,27 +202,27 @@ sleep 5
 ########### Probing for live domains from endpoints and js files with httpx ###########
 tput setaf 42; echo -n "[+] Probing for live subs with httpx: "
 # Save only newly found subs
-cat subs.new | anew -d subs.alive > subs.ripgen
+cat subs.new | anew -d subs.live > subs.ripgen-2
 # DNS Permutations
-ripgen -d subs.ripgen -w $permutations > subs.all-unsort
+ripgen -d subs.ripgen-2 -w $permutations > subs.all-unsort
 # Resolve subs with puredns
 cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards-2 --write subs.puredns &>/dev/null
 # Get A records, CDN info with DNSx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx-2.json &>/dev/null
-rm subs.puredns subs.new subs.all-unsort subs.ripgen
+rm subs.puredns subs.new subs.all-unsort subs.ripgen-2
 # Extract non CDN IPs
 cat subs.dnsx-2.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u > IPs.new
 tput setaf 3; echo "[$(cat IPs.new | wc -l)]"
 # Extract resolved subs
-cat subs.dnsx-2.json | jq '.host ' | tr -d '"' | sort -u > subs.alive-2
+cat subs.dnsx-2.json | jq '.host ' | tr -d '"' | sort -u > subs.live-2
 
 # Check http ports with httpx
-cat subs.alive-2 | httpx -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
+cat subs.live-2 | httpx -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx-2 | wc -l)]"
 
 # House cleaning for resolved subs, subs with http ports and IPs
 sort -u subs.httpx subs.httpx-2 > subs.httpx-final && rm subs.httpx subs.httpx-2
-sort -u subs.alive subs.alive-2 > subs.txt && rm subs.alive subs.alive-2
+sort -u subs.live subs.live-2 > subs.txt && rm subs.live subs.live-2
 sort -u subs.wildcards subs.wildcards-2 > wildcard-subs.txt && rm subs.wildcards subs.wildcards-2
 sort IPs.live IPs.new > IPs.txt && rm IPs.live IPs.new
 echo "Total valid subs: $(cat subs.txt | wc -l)" | lolcat
