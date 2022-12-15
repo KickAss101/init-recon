@@ -88,17 +88,17 @@ fi
 tput setaf 3; echo "[$(cat subs/subs.github 2>/dev/null | wc -l)]"
 sleep 2
 
-# subdomain permutations with ripgen 
-tput setaf 42; echo -n "[+] subs permutations: ripgen "
+# subdomain permutations with altdns 
+tput setaf 42; echo -n "[+] subs permutations: altdns "
 sort -u subs/* >> subs.1
-cat subs.1 | ripgen -w $permutations >> subs.all-unsort
-sort -u subs.all-unsort >> subs.ripgen && rm subs.all-unsort
-tput setaf 3; echo "[$(cat subs.ripgen 2>/dev/null | wc -l)]"
+altdns -i subs.1 -o subs.all-unsort -w $permutations -t 100
+sort -u subs.all-unsort >> subs.altdns && rm subs.all-unsort
+tput setaf 3; echo "[$(cat subs.altdns 2>/dev/null | wc -l)]"
 
 # Resolving subdomains & gather IPs with dnsx
 tput setaf 42; echo -n "[+] Alive subs from permutations (best to run on VPS) : "
 # puredns
-cat subs.ripgen subs.1 | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
+cat subs.altdns subs.1 | puredns resolve -r $nameservers -t 180 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 180 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
 
@@ -202,14 +202,14 @@ sleep 5
 ########### Probing for live domains from endpoints and js files with httpx ###########
 tput setaf 42; echo -n "[+] Probing for live subs with httpx: "
 # Save only newly found subs
-cat subs.new | anew -d subs.live > subs.ripgen-2
+cat subs.new | anew -d subs.live > subs.altdns-2
 # DNS Permutations
-ripgen -d subs.ripgen-2 -w $permutations > subs.all-unsort
+altdns -i subs.altdns-2 -o subs.all-unsort -w $permutations -t 100
 # Resolve subs with puredns
 cat subs.all-unsort | puredns resolve -r $nameservers -t 200 --wildcard-batch 100000 -n 5 --write-wildcards subs.wildcards-2 --write subs.puredns &>/dev/null
 # Get A records, CDN info with DNSx
 cat subs.puredns | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -t 250 -rl 300 -r $nameservers -wt 8 -json -o subs.dnsx-2.json &>/dev/null
-rm subs.puredns subs.new subs.all-unsort subs.ripgen-2
+rm subs.puredns subs.new subs.all-unsort subs.altdns-2
 # Extract non CDN IPs
 cat subs.dnsx-2.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -u > IPs.new
 tput setaf 3; echo "[$(cat IPs.new | wc -l)]"
