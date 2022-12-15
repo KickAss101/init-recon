@@ -63,13 +63,13 @@ tput setaf 3; echo "[$(sort -u subs.findomain 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with subfinder
-tput setaf 42; echo -n "[+] subs enum: findomain "
+tput setaf 42; echo -n "[+] subs enum: subfinder "
 subfinder -$subfinder_flag $OPTARG -silent -t 25 >> subs.subfinder
 tput setaf 3; echo "[$(sort -u subs.subfinder 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with amass active
-tput setaf 42; echo -n "[+] subs enum: amass active bruteforce "
+tput setaf 42; echo -n "[+] subs enum: amass "
 amass enum -$amass_flag $OPTARG -src -passive -active -max-depth 5 -brute -silent -dir ./amass-active
 cat amass-active/amass.json | jq .name -r | sort -u > subs.amass
 tput setaf 3; echo "[$(cat subs.amass 2>/dev/null | wc -l)]"
@@ -151,7 +151,7 @@ sleep 5
 
 # Active URL Enumeration with gospider
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
-gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2
+gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 >/dev/null
 if [ $FLAG = "t" ]; then
     cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
 else
@@ -171,7 +171,9 @@ sort -u urls.all | grep -i ".js"  > urls.js
 mkdir js-files cloud-keys &>/dev/null
 # Download JS Files from .js urls
 cd js-files
+tput setaf 42; echo -n "[+] Downloading js files ... "
 cat ../urls.js | xargs -I {} wget {} &>/dev/null
+tput setaf 3; echo "[Done]"
 cd ..
 
 # XNLinkFinder
