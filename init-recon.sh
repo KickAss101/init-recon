@@ -71,7 +71,7 @@ sleep 2
 
 # subdomain enum with amass active
 tput setaf 42; echo -n "[+] subs enum: amass "
-amass enum -$amass_flag $OPTARG -src -passive -ip -active -max-depth 5 -brute -silent -dir ./amass-active
+amass enum -$amass_flag $OPTARG -src -passive -active -max-depth 5 -brute -silent -dir ./amass-active
 cat amass-active/amass.json | jq .name -r | sort -u > subs/subs.amass
 tput setaf 3; echo "[$(cat subs/subs.amass 2>/dev/null | wc -l)]"
 sleep 2
