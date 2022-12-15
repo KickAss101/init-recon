@@ -98,9 +98,9 @@ tput setaf 3; echo "[$(cat subs.altdns 2>/dev/null | wc -l)]"
 # Resolving subdomains & gather IPs with dnsx
 tput setaf 42; echo -n "[+] Alive subs from permutations (best to run on VPS) : "
 # puredns
-cat subs.altdns | puredns resolve -r $nameservers -n 5 --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
+# cat subs.altdns | puredns resolve -r $nameservers --write-wildcards subs.wildcards --write subs.puredns &>/dev/null
 # dnsx
-cat subs.puredns subs.1 | dnsx -silent -a -cdn -re -txt -rcode noerror,servfail,refused -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
+cat subs.altdns subs.1 | dnsx -silent -a -cdn -re -txt -rcode servfail,refused -r $nameservers -wt 8 -json -o subs.dnsx.json &>/dev/null
 
 # Alive subs after dnsx
 cat subs.dnsx.json | jq '.host ' | tr -d '"' | sort -u >> subs.live
