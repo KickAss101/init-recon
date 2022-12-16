@@ -278,8 +278,8 @@ sleep 3
 
 ### Find more params ###
 tput setaf 42; echo -n "[+] Finding more params: arjun "
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET -t 15  >/dev/null && sleep 60
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST -t 15 >/dev/null
+arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET -t 50  >/dev/null
+# arjun -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST -t 50 >/dev/null
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-JSON -m POST-JSON >/dev/null && sleep 180
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-XML -m POST-XML >/dev/null
 tput setaf 3; echo "[Done]"
