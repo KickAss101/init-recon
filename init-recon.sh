@@ -162,6 +162,7 @@ sleep 5
 # Active URL Enumeration with gospider
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
 gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 >/dev/null
+sleep 2
 if [ $FLAG = "t" ]; then
     cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
 else
@@ -272,7 +273,7 @@ sleep 3
 
 ### Probing for live urls with httpx ###
 tput setaf 42; echo -n "[+] Probing for live urls: httpx "
-cat urls.all | qsreplace | sort -u | httpx -silent -nc -rl 100 -o urls.live &>/dev/null
+cat urls.all | qsreplace | sort -u | httpx -silent -nc >> urls.live
 tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
