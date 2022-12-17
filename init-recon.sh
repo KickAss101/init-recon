@@ -278,31 +278,31 @@ tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
 ### Find more params ###
-tput setaf 42; echo -n "[+] Finding more params: arjun "
-arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET -t 300  2>/dev/null
+# tput setaf 42; echo -n "[+] Finding more params: arjun "
+# arjun -q -i urls.live -d 1 -oT urls.params-arjun-GET -m GET -t 300  2>/dev/null
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-POST -m POST -t 50 >/dev/null
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-JSON -m POST-JSON >/dev/null && sleep 180
 # arjun -q -i urls.live -d 1 -oT urls.params-arjun-XML -m POST-XML >/dev/null
-tput setaf 3; echo "[Done]"
+# tput setaf 3; echo "[Done]"
+# sleep 3
+
+########### Grep urls with params ###########
+tput setaf 42; echo -n "[+] Greping urls with params: "
+cat urls.live | grep "=" | sort -u urls.params | qsreplace FUZZ | sort -u > urls.fuzz
+tput setaf 3; echo "[$(cat urls.fuzz | wc -l)]"
 sleep 3
 
 ########### Grep endpoints, params, values, keypairs ###########
 tput setaf 42; echo "[+] Greping paths, params keys, keypairs: unfurl"
 mkdir unfurl
-cat urls.params-arjun-GET | unfurl -u paths >> unfurl/paths.txt
-cat urls.params-arjun-GET | unfurl -u keys >> unfurl/params.txt
-cat urls.params-arjun-GET | unfurl -u keypairs >> unfurl/keypairs.txt
-sleep 3
-
-########### Grep urls with params ###########
-tput setaf 42; echo -n "[+] Greping urls with params: "
-cat urls.live urls.params-arjun-GET | grep "=" | sort -u urls.params | qsreplace FUZZ | sort -u > urls.fuzz
-tput setaf 3; echo "[$(cat urls.fuzz | wc -l)]"
+cat urls.fuzz | unfurl -u paths >> unfurl/paths.txt
+cat urls.fuzz | unfurl -u keys >> unfurl/params.txt
+cat urls.fuzz | unfurl -u keypairs >> unfurl/keypairs.txt
 sleep 3
 
 ########### Run urls against nuclei ###########
 tput setaf 42; echo -n "[+] Run urls against nuclei: "
-nuclei -l urls.live -fr -es info -o urls.nuclei
+nuclei -l urls.live -fr -es info -o urls.nuclei &>/dev/null
 tput setaf 3; echo "[Done]"
 sleep 3
 
