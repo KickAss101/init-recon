@@ -241,16 +241,16 @@ echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat
 sleep 5
 
 ### Portscan with naabu for subs ###
-naabu -list subs.txt -p- -rate 4000 -o subs.naabu &>/dev/null
+naabu -list subs.txt -p- -rate 4000 -o subs.naabu
 
 ### Portscan with naabu for IPs###
-naabu -list IPs.txt -p- -rate 4000 -o IPs.naabu &>/dev/null
+naabu -list IPs.txt -p- -rate 4000 -o IPs.naabu
 
 ### Nuclie Test for subs ###
-nuclei -l subs.naabu -fr -es info -o subs.nuclei &>/dev/null
+nuclei -l subs.naabu -fr -es info -o subs.nuclei
 
 ### Nuclie Test for IPs ###
-nuclei -l IPs.naabu -fr -es info -o IPs.nuclei &>/dev/null
+nuclei -l IPs.naabu -fr -es info -o IPs.nuclei
 
 ################### Greping Values Starts ###################
 ### Grep cloud-keys from endpoints ###
@@ -273,7 +273,7 @@ sleep 3
 
 ### Probing for live urls with httpx ###
 tput setaf 42; echo -n "[+] Probing for live urls: httpx "
-cat urls.all | qsreplace | sort -u | httpx -silent -nc >> urls.live
+cat urls.all | qsreplace | sort -u | httpx -silent -nc | sort -u >> urls.live
 tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
@@ -288,7 +288,7 @@ sleep 3
 
 ########### Grep urls with params ###########
 tput setaf 42; echo -n "[+] Greping urls with params: "
-cat urls.live | grep "=" | sort -u urls.params | qsreplace FUZZ | sort -u > urls.fuzz
+cat urls.live | grep "=" | sort -u urls.params | qsreplace FUZZ | sort -u >> urls.fuzz
 tput setaf 3; echo "[$(cat urls.fuzz | wc -l)]"
 sleep 3
 
@@ -332,15 +332,15 @@ sleep 3
 cat subs.httpx-final | gf interestingsubs > subs.interesting
 
 ########### Automated tests on gf pattern urls ###########
-mkdir automated-test && cd automated-test
-tput setaf 42; echo "[+] Running Automated Tests: $(pwd)"
+# mkdir automated-test && cd automated-test
+# tput setaf 42; echo "[+] Running Automated Tests: $(pwd)"
 
 # XSS Test
-tput setaf 42; echo "[+] XSS Test: "
-cat ../urls.fuzz | kxss | sed s'/URL: //'| qsreplace >> ../urls.params-reflect
-dalfox file ../urls.params-reflect --blind $blindXSS -F -o xss-1.log &>/dev/null
-dalfox file gf-patterns/urls.xss --blind $blindXSS -F -o xss-2.log &>/dev/null
-sleep 180
+# tput setaf 42; echo "[+] XSS Test: "
+# cat ../urls.fuzz | kxss | sed s'/URL: //'| qsreplace >> ../urls.params-reflect
+# dalfox file ../urls.params-reflect --blind $blindXSS -F -o xss-1.log &>/dev/null
+# dalfox file gf-patterns/urls.xss --blind $blindXSS -F -o xss-2.log &>/dev/null
+# sleep 180
 
 # SSRF Test
 
