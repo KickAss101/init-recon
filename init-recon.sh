@@ -152,10 +152,10 @@ tput setaf 42; echo -n "[+] Endpoints enum: github-endpoints "
 if [ $FLAG = "t" ]; then
     github-endpoints -d $OPTARG -o urls.github-unsort &>/dev/null
 else
-    cat $OPTARG | while read line; do github-endpoints -d $line -o urls-$line.github-unsort; done 
+    cat $OPTARG | while read line; do github-endpoints -d $line -o urls-$line.github-unsort &>/dev/null; done 
 fi
 # Clean up
-sort -u urls.waymore urls*.github-unsort > urls.passive && rm urls.github-unsort urls.waymore
+sort -u urls.waymore urls*.github-unsort > urls.passive && rm urls*.github-unsort urls.waymore
 tput setaf 3; echo "[$(cat urls.passive 2>/dev/null | wc -l)]"
 sleep 5
 
@@ -183,7 +183,7 @@ mkdir js-files cloud-keys &>/dev/null
 # Download JS Files from .js urls
 cd js-files
 tput setaf 42; echo -n "[+] Downloading js files "
-pv ../urls.js | while read line; do wget $line; done &>/dev/null
+pv -tp ../urls.js | while read line; do wget $line; done &>/dev/null
 tput setaf 3; echo "[Done]"
 cd ..
 
@@ -241,10 +241,10 @@ echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat
 sleep 5
 
 ### Portscan with naabu for subs ###
-naabu -list subs.txt -p- -rate 4000 -o subs.naabu
+naabu -list subs.txt -p 0-65535 -rate 4000 -o subs.naabu
 
 ### Portscan with naabu for IPs###
-naabu -list IPs.txt -p- -rate 4000 -o IPs.naabu
+naabu -list IPs.txt -p 0-65535 -rate 4000 -o IPs.naabu
 
 ### Nuclie Test for subs ###
 nuclei -l subs.naabu -fr -es info -o subs.nuclei
@@ -288,7 +288,8 @@ sleep 3
 
 ########### Grep urls with params ###########
 tput setaf 42; echo -n "[+] Greping urls with params: "
-cat urls.live | grep "=" | sort -u urls.params | qsreplace FUZZ | sort -u >> urls.fuzz
+cat urls.live | grep "=" | sort -u > urls.params 
+cat urls.params | qsreplace FUZZ | sort -u >> urls.fuzz
 tput setaf 3; echo "[$(cat urls.fuzz | wc -l)]"
 sleep 3
 
@@ -309,21 +310,21 @@ sleep 3
 ########### Replace params values as FUZZ with qsreplace ###########
 tput setaf 42; echo "[+] Gf patterning urls: gf"
 mkdir gf-patterns && cd gf-patterns
-cat ../urls.fuzz | gf xss > urls.xss
-cat ../urls.fuzz | gf ssrf > urls.ssrf
-cat ../urls.fuzz | grep -i "=\/" > urls.take-paths
-cat ../urls.fuzz | gf redirect > urls.redirect
-cat ../urls.fuzz | gf rce > urls.rce
-cat ../urls.fuzz | gf interestingparams > urls.interestingparams
-cat ../urls.fuzz | gf http-auth > urls.http-auth
-cat ../urls.fuzz | gf upload-fields > urls. upload-fields
-cat ../urls.fuzz | gf img-traversal > urls.img-traversal
-cat ../urls.fuzz | gf lfi > urls.lfi
-cat ../urls.fuzz | gf ip > urls.ip
-cat ../urls.fuzz | gf ssti > urls.ssti
-cat ../urls.fuzz | gf idor > urls.idor
-cat ../urls.fuzz | gf base64 > urls.base64
-cat ../urls.fuzz | gf sqli > urls.sqli
+gf xss ../urls.fuzz > urls.xss
+gf ssrf ../urls.fuzz > urls.ssrf
+grep -i "=\/" ../urls.fuzz > urls.take-paths
+gf redirect ../urls.fuzz > urls.redirect
+gf rce ../urls.fuzz > urls.rce
+gf interestingparams ../urls.fuzz  > urls.interestingparams
+gf http-auth ../urls.fuzz > urls.http-auth
+gf upload-fields ../urls.fuzz > urls. upload-fields
+gf img-traversal ../urls.fuzz > urls.img-traversal
+gf lfi ../urls.fuzz > urls.lfi
+gf ip ../urls.fuzz > urls.ip
+gf ssti ../urls.fuzz > urls.ssti
+gf idor ../urls.fuzz > urls.idor
+gf base64 ../urls.fuzz > urls.base64
+gf sqli ../urls.fuzz > urls.sqli
 cd ..
 sleep 3
 ###################### Greping Values Ends ######################
@@ -358,13 +359,6 @@ cat subs.httpx-final | gf interestingsubs > subs.interesting
 
 
 ###################### Dorks Generation Starts ######################
-########### shodan dorks file ###########
-if [ $FLAG = "t" ]; then
-    cat .shodan.dorks | sed 's|${target}|$OPTARG|'  > shodan-dorks.txt
-else
-    cat .shodan.dorks | while read line; do sed 's|${target}|$line|'; done  > shodan-dorks-$line.txt
-fi
-sleep 3
 ###################### Dorks Generation Ends ######################
 
 
