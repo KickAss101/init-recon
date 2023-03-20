@@ -10,9 +10,15 @@ fi
 if [ ! -d /opt/bin ];then
     sudo mkdir /opt/bin
 fi
+if [ ! -d ~/git ];then
+    sudo mkdir ~/git
+fi
+if [ ! -d ~/git/wordlists ];then
+    mkdir ~/git/wordlists
+fi
 
 ### Print any uninstalled tools ###
-tools=("anewer" "naabu" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
+tools=("anewer" "naabu" "pv" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx-toolkit" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
 
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
@@ -26,7 +32,7 @@ done
 # apt installs
 sudo apt update -y
 echo -e "\033[32mAPT Installs \033[0m"
-sudo apt install python3 altdns naabu golang-go lolcat figlet jq cargo massdns gobuster whatweb -y
+sudo apt install seclists httpx-toolkit pv python3 python3-pip altdns naabu golang-go lolcat figlet jq cargo massdns gobuster whatweb -y
 
 # Add go bin to path
 echo $PATH | grep -q "go/bin" && echo "go/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
@@ -62,11 +68,6 @@ fi
 # dnsx
 if ! command -v dnsx > /dev/null 2>&1; then
     go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
-fi
-
-# httpx
-if ! command -v httpx > /dev/null 2>&1; then
-    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 fi
 
 # github-endpoints
@@ -116,26 +117,12 @@ fi
 
 # arjun
 if ! command -v arjun > /dev/null 2>&1; then
-    pip3 install arjun
-    sudo apt install arjun &>/dev/null
+    pip install arjun
 fi
 
 # Dalfox
 if ! command -v dalfox > /dev/null 2>&1; then
     go install github.com/hahwul/dalfox/v2@latest
-fi
-
-# waymore.py
-if ! command -v waymore.py > /dev/null 2>&1; then
-    cd
-    mkdir tools
-    cd tools
-    git clone https://github.com/xnl-h4ck3r/waymore.git
-    cd waymore
-    sudo python setup.py install
-    chmod +x waymore.py
-    cd
-    sudo ln -s /home/$(whoami)/tools/waymore/waymore.py /opt/bin
 fi
 
 # xnLinkFinder.py
@@ -170,29 +157,24 @@ fi
 
 ### Wordlists ###
 # gf-patterns
-if [ ! -d /opt ];then
+if [ ! -d /.gf ];then
     mkdir ~/.gf
 fi
-cp go/pkg/mod/github.com/tomnomnom/gf*/examples/*.json ~/.gf 2>/dev/null
+cp ~/go/pkg/mod/github.com/tomnomnom/gf*/examples/*.json ~/.gf 2>/dev/null
 cd /opt
 git clone https://github.com/1ndianl33t/Gf-Patterns 2>/dev/null
 mv Gf-Patterns/*.json ~/.gf 2>/dev/null
 
 # resolvers
-if [ ! -d ~/git/wordlists ];then
-    mkdir -p ~/git/wordlists
-fi
+cd ~/git/wordlists
 git clone https://github.com/trickest/resolvers
 git clone https://github.com/KickAss101/ALL.TXTs
 git clone https://github.com/six2dez/OneListForAll
 
-# seclists
-sudo apt install seclists
-
 # assestnotes wordlists
 
 ### Print any uninstalled tools ###
-tools=("anewer" "naabu" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
+tools=("anewer" "naabu" "dalfox" "pv" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx-toolkit" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
         echo -e "\033[31mInstall $tool manually\033[0m"

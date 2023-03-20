@@ -57,7 +57,7 @@ permutations=~/git/wordlists/ALL.TXTs/permutations.txt
 blacklist="bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2"
 
 ################################# Subdomain enumeration Starts #################################
-mkdir subs
+mkdir subs &>/dev/null
 # subdomain enum with findomain
 tput setaf 42; echo -n "[+] subs enum: findomain "
 findomain -$findomain_flag $OPTARG -q --lightweight-threads 25 -u subs/subs.findomain &>/dev/null
@@ -126,7 +126,7 @@ sleep 5
 
 # Check http ports with httpx
 tput setaf 42; echo -n "[+] subs resolve: httpx "
-httpx -l subs.live -x GET,POST -silent -nc -rl 80 -o subs.httpx &>/dev/null
+httpx-toolkit -l subs.live -x GET,POST -silent -nc -rl 80 -o subs.httpx &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx 2>/dev/null | wc -l)]"
 
 # IPs to check in shodan
@@ -227,7 +227,7 @@ cat subs.dnsx-2.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -
 cat subs.dnsx-2.json | jq '.host ' | tr -d '"' | sort -u > subs.live-2
 
 # Check http ports with httpx
-cat subs.live-2 | httpx -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
+cat subs.live-2 | httpx-toolkit -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx-2 | wc -l)]"
 
 # House cleaning for resolved subs, subs with http ports and IPs
@@ -263,16 +263,16 @@ sleep 3
 
 ### Grep cloud-keys from JS files ###
 tput setaf 42; echo -n "[+] Finding cloud-keys from js files: "
-cat js-files/* | gf aws-keys | sort -u >> cloud-keys/js.aws-keys
-cat js-files/* | gf firebase | sort -u >> cloud-keys/js.firebase
-cat js-files/* | gf s3-buckets | sort -u >>  cloud-keys/js.s3-buckets
-cat js-files/* | gf sec | sort -u >> cloud-keys/js.sec
+cat js-files/* | gf aws-keys | sort -u >> cloud-keys/js.aws-keys 2>/dev/null
+cat js-files/* | gf firebase | sort -u >> cloud-keys/js.firebase 2>/dev/null
+cat js-files/* | gf s3-buckets | sort -u >>  cloud-keys/js.s3-buckets 2>/dev/null
+cat js-files/* | gf sec | sort -u >> cloud-keys/js.sec 2>/dev/null
 tput setaf 3; echo "[Done]"
 sleep 3
 
 ### Probing for live urls with httpx ###
 tput setaf 42; echo -n "[+] Probing for live urls: httpx "
-cat urls.all | qsreplace | sort -u | httpx -silent -nc | sort -u >> urls.live
+cat urls.all | qsreplace | sort -u | httpx-toolkit -silent -nc | sort -u >> urls.live
 tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
