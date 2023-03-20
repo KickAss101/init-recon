@@ -11,6 +11,17 @@ if [ ! -d /opt/bin ];then
     sudo mkdir /opt/bin
 fi
 
+### Print any uninstalled tools ###
+tools=("anewer" "naabu" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
+
+for tool in "${tools[@]}"; do
+    if ! command -v $tool > /dev/null 2>&1; then
+        echo -e "\033[31mInstall $tool missing\033[0m"
+    else
+        echo -e "\033[32mFound $tool \033[0m"
+    fi
+done
+
 ### Tools ###
 # apt installs
 sudo apt update -y
