@@ -148,6 +148,11 @@ if ! command -v findomain > /dev/null 2>&1; then
     cd
 fi
 
+# gau
+if ! command -v gau > /dev/null 2>&1; then
+go install github.com/lc/gau/v2/cmd/gau@latest
+fi
+
 # anewer
 if ! command -v anewer > /dev/null 2>&1; then
     cargo install anewer
@@ -162,8 +167,7 @@ sudo apt install seclists
 # assestnotes wordlists
 
 ### Print any uninstalled tools ###
-tools=("anewer" "naabu" "dalfox" "altdns" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
-
+tools=("anewer" "naabu" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
         echo -e "\033[31mInstall $tool manually\033[0m"
