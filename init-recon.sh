@@ -54,7 +54,7 @@ echo
 nameservers=~/git/wordlists/resolvers/resolvers.txt
 trustedresolvers=~/git/wordlists/resolvers/resolvers-trusted.txt
 permutations=~/git/wordlists/ALL.TXTs/permutations.txt
-waymore_path=~/tools/waymore/results
+blacklist="bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2"
 
 ################################# Subdomain enumeration Starts #################################
 mkdir subs
@@ -135,16 +135,15 @@ sleep 2
 ################################# Subdomain enumeration Ends #################################
 
 ################################# Endpoints enumeration Starts #################################
-# Passive URL Enumeration with waymore
-tput setaf 42; echo -n "[+] Passive URL enum: waymore "
-waymore.py -i $OPTARG -mode U -ow -p 5 -lcc 45 &>/dev/null
+# Passive URL Enumeration with gau
+tput setaf 42; echo -n "[+] Passive URL enum: gau "
 if [ $FLAG = "t" ]; then
-    mv $waymore_path/$OPTARG/waymore.txt urls.waymore
+    printf $OPTARG | gau --subs --threads 25 --o urls.gau --providers wayback,commoncrawl,otx,urlscan --blacklist $blacklist
 else
-    cat $OPTARG | while read line; do cat $waymore_path/$line/waymore.txt >> urls.waymore; done
+    cat $OPTARG | gau --subs --threads 25 --o urls.gau --providers wayback,commoncrawl,otx,urlscan --blacklist $blacklist
 fi
 # Clean up
-tput setaf 3; echo "[$(cat urls.waymore 2>/dev/null | wc -l)]"
+tput setaf 3; echo "[$(cat urls.gau 2>/dev/null | wc -l)]"
 sleep 5
 
 # Endpoints enumeration with github-endpoints
@@ -155,13 +154,13 @@ else
     cat $OPTARG | while read line; do github-endpoints -d $line -o urls-$line.github-unsort &>/dev/null; done 
 fi
 # Clean up
-sort -u urls.waymore urls*.github-unsort > urls.passive && rm urls*.github-unsort urls.waymore
+sort -u urls.gau urls*.github-unsort > urls.passive && rm urls*.github-unsort urls.gau
 tput setaf 3; echo "[$(cat urls.passive 2>/dev/null | wc -l)]"
 sleep 5
 
 # Active URL Enumeration with gospider
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
-gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,ogv,otf,png,rtf,scss,svg,swf,tif,tiff,ttf,webm,webp,woff,woff2 >/dev/null
+gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist $blacklist >/dev/null
 sleep 2
 if [ $FLAG = "t" ]; then
     cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
@@ -207,7 +206,7 @@ sleep 5
 ########### Probing for live domains from endpoints and js files with httpx ###########
 tput setaf 42; echo -n "[+] Probing for new subs with httpx: "
 # Save only newly found subs
-cat subs.new | anew -d subs.live > subs.altdns-2
+cat subs.new | anewer -d subs.live > subs.altdns-2
 
 # DNS Permutations
 altdns -i subs.altdns-2 -o subs.all-unsort -w $permutations -t 100
@@ -243,7 +242,7 @@ sleep 5
 ### Portscan with naabu for subs ###
 naabu -list subs.txt -p 0-65535 -rate 4000 -o subs.naabu
 
-### Portscan with naabu for IPs###
+### Portscan with naabu for IPs
 naabu -list IPs.txt -p 0-65535 -rate 4000 -o IPs.naabu
 
 ### Nuclie Test for subs ###

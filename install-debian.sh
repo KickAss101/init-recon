@@ -141,9 +141,9 @@ if ! command -v naabu > /dev/null 2>&1; then
     go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
 fi
 
-# anew
-if ! command -v anew > /dev/null 2>&1; then
-    go install -v github.com/tomnomnom/anew@latest
+# anewer
+if ! command -v anewer > /dev/null 2>&1; then
+    cargo install anewer
 fi
 
 ### Wordlists ###
@@ -155,7 +155,7 @@ sudo apt install seclists
 # assestnotes wordlists
 
 ### Print any uninstalled tools ###
-tools=("anew" "naabu" "dalfox" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
+tools=("anew" "naabu" "dalfox" "altdns" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
 
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
