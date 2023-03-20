@@ -15,7 +15,7 @@ fi
 # apt installs
 sudo apt update -y
 echo "APT Installs"
-sudo apt install golang-go lolcat figlet jq cargo massdns gobuster whatweb -y
+sudo apt install python3 altdns naabu golang-go lolcat figlet jq cargo massdns gobuster whatweb -y
 
 # amass
 if ! command -v amass > /dev/null 2>&1; then
@@ -137,11 +137,6 @@ if ! command -v findomain > /dev/null 2>&1; then
     cd
 fi
 
-# naabu
-if ! command -v naabu > /dev/null 2>&1; then
-    go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
-fi
-
 # anewer
 if ! command -v anewer > /dev/null 2>&1; then
     cargo install anewer
@@ -156,7 +151,7 @@ sudo apt install seclists
 # assestnotes wordlists
 
 ### Print any uninstalled tools ###
-tools=("anew" "naabu" "dalfox" "altdns" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
+tools=("anewer" "naabu" "dalfox" "altdns" "findomain" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "waymore.py" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun" "seclists")
 
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
