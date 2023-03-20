@@ -206,7 +206,7 @@ sleep 5
 ########### Probing for live domains from endpoints and js files with httpx ###########
 tput setaf 42; echo -n "[+] Probing for new subs with httpx: "
 # Save only newly found subs
-cat subs.new | anewer -d subs.live > subs.altdns-2
+cat subs.new | anewer -n subs.live > subs.altdns-2
 
 # DNS Permutations
 altdns -i subs.altdns-2 -o subs.all-unsort -w $permutations -t 100
