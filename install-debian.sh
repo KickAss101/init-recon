@@ -160,6 +160,21 @@ fi
 
 ### Wordlists ###
 # gf-patterns
+if [ ! -d /opt ];then
+    mkdir ~/.gf
+fi
+cp go/pkg/mod/github.com/tomnomnom/gf*/examples/*.json ~/.gf 2>/dev/null
+cd /opt
+git clone https://github.com/1ndianl33t/Gf-Patterns 2>/dev/null
+mv Gf-Patterns/*.json ~/.gf 2>/dev/null
+
+# resolvers
+if [ ! -d ~/git/wordlists ];then
+    mkdir -p ~/git/wordlists
+fi
+git clone https://github.com/trickest/resolvers
+git clone https://github.com/KickAss101/ALL.TXTs
+git clone https://github.com/six2dez/OneListForAll
 
 # seclists
 sudo apt install seclists
