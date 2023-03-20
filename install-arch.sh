@@ -29,6 +29,17 @@ done
 sudo pacman -Syu
 sudo pacman -S go lolcat figlet jq cargo blackarch/gau blackarch/altdns blackarch/seclists blackarch/naabu blackarch/findomain blackarch/nuclei blackarch/dalfox blackarch/arjun blackarch/qsreplace blackarch/gf blackarch/subjs blackarch/massdns blackarch/gobuster blackarch/whatweb blackarch/subfinder blackarch/amass blackarch/dnsx blackarch/httpx blackarch/gospider blackarch/unfurl
 
+# Add go bin to path
+echo $PATH | grep -q "go/bin" && echo "go/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
+
+# Add cargo bin to path
+echo $PATH | grep -q ".cargo/bin" && echo ".cargo/bin is in PATH" || echo 'export PATH=$PATH:$HOME/.cargo/bin' >> ~/.zshrc
+
+# Add /opt/bin to path
+echo $PATH | grep -q "/opt/bin" && echo "/opt/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
+
+source ~/.zshrc
+
 # github-subdomains
 if ! command -v github-subdomains > /dev/null 2>&1; then
     go install github.com/gwen001/github-subdomains@latest
@@ -91,17 +102,6 @@ git clone https://github.com/KickAss101/ALL.TXTs
 git clone https://github.com/six2dez/OneListForAll
 
 # assestnotes wordlists
-
-# Add go bin to path
-echo $PATH | grep -q "go/bin" && echo "go/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
-
-# Add cargo bin to path
-echo $PATH | grep -q ".cargo/bin" && echo ".cargo/bin is in PATH" || echo 'export PATH=$PATH:$HOME/.cargo/bin' >> ~/.zshrc
-
-# Add /opt/bin to path
-echo $PATH | grep -q "/opt/bin" && echo "/opt/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
-
-source ~/.zshrc
 
 ### Print any uninstalled tools ###
 tools=("anew" "naabu" "dalfox" "findomain" "amass" "altdns" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")

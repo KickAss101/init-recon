@@ -25,8 +25,19 @@ done
 ### Tools ###
 # apt installs
 sudo apt update -y
-echo "APT Installs"
+echo -e "\033[32mAPT Installs \033[0m"
 sudo apt install python3 altdns naabu golang-go lolcat figlet jq cargo massdns gobuster whatweb -y
+
+# Add go bin to path
+echo $PATH | grep -q "go/bin" && echo "go/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
+
+# Add cargo bin to path
+echo $PATH | grep -q ".cargo/bin" && echo ".cargo/bin is in PATH" || echo 'export PATH=$PATH:$HOME/.cargo/bin' >> ~/.zshrc
+
+# Add /opt/bin to path
+echo $PATH | grep -q "/opt/bin" && echo "/opt/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
+
+source ~/.zshrc
 
 # amass
 if ! command -v amass > /dev/null 2>&1; then
@@ -179,17 +190,6 @@ git clone https://github.com/six2dez/OneListForAll
 sudo apt install seclists
 
 # assestnotes wordlists
-
-# Add go bin to path
-echo $PATH | grep -q "go/bin" && echo "go/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
-
-# Add cargo bin to path
-echo $PATH | grep -q ".cargo/bin" && echo ".cargo/bin is in PATH" || echo 'export PATH=$PATH:$HOME/.cargo/bin' >> ~/.zshrc
-
-# Add /opt/bin to path
-echo $PATH | grep -q "/opt/bin" && echo "/opt/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
-
-source ~/.zshrc
 
 ### Print any uninstalled tools ###
 tools=("anewer" "naabu" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
