@@ -14,7 +14,7 @@ fi
 ### Tools ###
 # apt installs
 sudo apt update -y
-sudo apt install golang lolcat figlet tput jq cargo massdns gobuster whatweb -y
+sudo apt install golang-go lolcat figlet tput jq cargo massdns gobuster whatweb -y
 
 # amass
 if ! command -v amass > /dev/null 2>&1; then
