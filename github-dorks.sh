@@ -108,5 +108,5 @@ echo "https://github.com/search?q=%22http://$without_suffix.onelogin.com+passwor
 echo "service now"
 echo "https://github.com/search?q=%22http://$1.service-now+password&type=code"
 echo "https://github.com/search?q=%22http://http://$1.atlassian.net+password&type=code"
-http://$1.jfrog.io password
-http://$1.sharepoint.com password
+echo "https://github.com/search?q=%22http://$1.jfrog.io+password"
+echo "https://github.com/search?q=%22http://$1.sharepoint.com+password"

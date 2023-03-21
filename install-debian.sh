@@ -17,6 +17,9 @@ if [ ! -d ~/git/wordlists ];then
     mkdir ~/git/wordlists
 fi
 
+# Change /opt ownership
+sudo chown -Rh $USER:$USER /opt
+
 ### Print any uninstalled tools ###
 tools=("anewer" "naabu" "pv" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx-toolkit" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
 
