@@ -1,6 +1,11 @@
 # init-recon
 
-### Wrapper around findomain, subfinder, httpx, subzy, aquatone
+### Wrapper around many passive and active recon tools for:
+- subdomains
+- Endpoints
+- IPs
+- Finding secrets
+- Vulnerabilities scan
 
 I'll update this script as I progress in my learning and as per my necessities. <br>
 There're tons of automation of recon tools but making your own gives a learning experience and motivating. <br>

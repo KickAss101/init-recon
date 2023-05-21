@@ -126,7 +126,7 @@ sleep 5
 
 # Check http ports with httpx
 tput setaf 42; echo -n "[+] subs resolve: httpx "
-httpx-toolkit -l subs.live -x GET,POST -silent -nc -rl 80 -o subs.httpx &>/dev/null
+httpx-pd -l subs.live -x GET,POST -silent -nc -rl 80 -o subs.httpx &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx 2>/dev/null | wc -l)]"
 
 # IPs to check in shodan
@@ -227,7 +227,7 @@ cat subs.dnsx-2.json | jq '. | select(.cdn == null) | .a[]' | tr -d '"' | sort -
 cat subs.dnsx-2.json | jq '.host ' | tr -d '"' | sort -u > subs.live-2
 
 # Check http ports with httpx
-cat subs.live-2 | httpx-toolkit -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
+cat subs.live-2 | httpx-pd -silent -nc -t 20 -rl 50 -o subs.httpx-2 &>/dev/null
 tput setaf 3; echo "[$(sort -u subs.httpx-2 | wc -l)]"
 
 # House cleaning for resolved subs, subs with http ports and IPs
@@ -272,7 +272,7 @@ sleep 3
 
 ### Probing for live urls with httpx ###
 tput setaf 42; echo -n "[+] Probing for live urls: httpx "
-cat urls.all | qsreplace | sort -u | httpx-toolkit -silent -nc | sort -u >> urls.live
+cat urls.all | qsreplace | sort -u | httpx-pd -silent -nc | sort -u >> urls.live
 tput setaf 3; echo "[$(sort -u urls.live | wc -l)]"
 sleep 3
 
@@ -355,10 +355,6 @@ cat subs.httpx-final | gf interestingsubs > subs.interesting
 # File Upload Test
 
 # SSTI
-
-
-###################### Dorks Generation Starts ######################
-###################### Dorks Generation Ends ######################
 
 
 ########### Cloud Enumeration ###########

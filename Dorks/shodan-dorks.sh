@@ -34,5 +34,5 @@ for domain in "${domains[@]}"; do
     output=$(echo "$dorks" | sed "s/\${target}/$domain/g")
 
     # Save the modified Shodan dorks to a file
-    echo "$output" > "$domain.txt"
+    echo "$output" > "shodan-$domain.txt"
 done
