@@ -2,17 +2,15 @@
 
 usage() 
 { 
-    echo "Usage: init-recon.sh [-t <target>] (or) [-f <file>]"
+    echo "Usage: init-recon.sh -t <target>"
     echo "Example: init-recon.sh -t tesla.com"
-    echo "Example: init-recon.sh -f root_domains.txt"
     exit 1
 }
 
 # command line Arguments
-getopts t:f:h: FLAG;
+getopts t:h: FLAG;
 case $FLAG in
     t) t=$OPTARG;;
-    f) f=$OPTARG;;
     *|h) usage;;
 esac
 
@@ -27,18 +25,6 @@ if [ ! -d ~/bug-hunting/recon ];then
 fi
 if [ ! -d ~/bug-hunting/recon/$dir ];then
     mkdir ~/bug-hunting/recon/$dir
-fi
-
-# Setting flags for file or domain | reduces code
-if [ $FLAG = "t" ]; then
-    findomain_flag=t
-    amass_flag=d
-    subfinder_flag=d
-else
-    findomain_flag=f
-    amass_flag=df
-    subfinder_flag=dL
-    cp $OPTARG ~/bug-hunting/recon/$dir
 fi
 
 # Print the name of the script with figlet
@@ -60,32 +46,27 @@ blacklist="bmp,css,eot,flv,gif,htc,ico,image,img,jpeg,jpg,m4a,m4p,mov,mp3,mp4,og
 mkdir subs &>/dev/null
 # subdomain enum with findomain
 tput setaf 42; echo -n "[+] subs enum: findomain "
-findomain -$findomain_flag $OPTARG -q --lightweight-threads 25 -u subs/subs.findomain &>/dev/null
+findomain -t $OPTARG -q --lightweight-threads 25 -u subs/subs.findomain &>/dev/null
 tput setaf 3; echo "[$(sort -u subs/subs.findomain 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with subfinder
 tput setaf 42; echo -n "[+] subs enum: subfinder "
-subfinder -$subfinder_flag $OPTARG -silent -t 25 >> subs/subs.subfinder
+subfinder -d $OPTARG -silent -t 25 >> subs/subs.subfinder
 tput setaf 3; echo "[$(sort -u subs/subs.subfinder 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with amass active
 tput setaf 42; echo -n "[+] subs enum: amass "
-amass enum -$amass_flag $OPTARG -src -passive -alts -active -max-depth 5 -brute -silent -dir ./amass-active
+amass enum -d $OPTARG -src -passive -alts -active -max-depth 5 -brute -silent -dir ./amass-active
 cat amass-active/amass.json | jq .name -r | sort -u > subs/subs.amass
 tput setaf 3; echo "[$(cat subs/subs.amass 2>/dev/null | wc -l)]"
 sleep 2
 
 # subdomain enum with github-subdomains
 tput setaf 42; echo -n "[+] subs enum: github-subdomains "
-if [ $FLAG = "t" ]; then
-    github-subdomains -d $OPTARG -o subs.github-unsort &>/dev/null
-    sort -u subs.github-unsort > subs/subs.github && rm subs.github-unsort
-else
-    cat $OPTARG | while read line; do github-subdomains -d $line -o subs-$line.github-unsort; done >/dev/null
-    sort -u subs-*.github-unsort >> subs/subs.github && rm subs-*.github-unsort
-fi
+github-subdomains -d $OPTARG -o subs.github-unsort &>/dev/null
+sort -u subs.github-unsort > subs/subs.github && rm subs.github-unsort
 tput setaf 3; echo "[$(cat subs/subs.github 2>/dev/null | wc -l)]"
 sleep 2
 
@@ -137,22 +118,14 @@ sleep 2
 ################################# Endpoints enumeration Starts #################################
 # Passive URL Enumeration with gau
 tput setaf 42; echo -n "[+] Passive URL enum: gau "
-if [ $FLAG = "t" ]; then
-    printf $OPTARG | gau --subs --threads 25 --o urls.gau --providers wayback,commoncrawl,otx,urlscan --blacklist $blacklist
-else
-    cat $OPTARG | gau --subs --threads 25 --o urls.gau --providers wayback,commoncrawl,otx,urlscan --blacklist $blacklist
-fi
+printf $OPTARG | gau --subs --threads 25 --o urls.gau --providers wayback,commoncrawl,otx,urlscan --blacklist $blacklist
 # Clean up
 tput setaf 3; echo "[$(cat urls.gau 2>/dev/null | wc -l)]"
 sleep 5
 
 # Endpoints enumeration with github-endpoints
 tput setaf 42; echo -n "[+] Endpoints enum: github-endpoints "
-if [ $FLAG = "t" ]; then
-    github-endpoints -d $OPTARG -o urls.github-unsort &>/dev/null
-else
-    cat $OPTARG | while read line; do github-endpoints -d $line -o urls-$line.github-unsort &>/dev/null; done 
-fi
+github-endpoints -d $OPTARG -o urls.github-unsort &>/dev/null
 # Clean up
 sort -u urls.gau urls*.github-unsort > urls.passive && rm urls*.github-unsort urls.gau
 tput setaf 3; echo "[$(cat urls.passive 2>/dev/null | wc -l)]"
@@ -162,12 +135,7 @@ sleep 5
 tput setaf 42; echo -n "[+] Active Endpoints enum: gospider "
 gospider -S subs.httpx -o urls-active -d 3 -c 20 -w -r -q --js --subs --sitemap --robots --blacklist $blacklist >/dev/null
 sleep 2
-if [ $FLAG = "t" ]; then
-    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
-else
-    roots=$(cat $OPTARG | while read line; do echo -n "$line|"; done | sed 's/.$//')
-    cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "($roots)" | sort -u >> urls.active
-fi
+cat urls-active/* | sed 's/\[.*\] - //' | grep -iE "$OPTARG" | sort -u >> urls.active
 tput setaf 3; echo "[$(cat urls.active 2>/dev/null | wc -l)]"
 sort -u urls.passive urls.active > urls.all && rm urls.passive urls.active
 sleep 5
@@ -182,7 +150,7 @@ mkdir js-files cloud-keys &>/dev/null
 # Download JS Files from .js urls
 cd js-files
 tput setaf 42; echo -n "[+] Downloading js files "
-pv -tp ../urls.js | while read line; do wget $line; done &>/dev/null
+aria2c -x 8 --split=4 -i ../urls.js &>/dev/null
 tput setaf 3; echo "[Done]"
 cd ..
 
@@ -195,11 +163,7 @@ tput setaf 3; echo "[Done]"
 
 ########### Grep subdomains from Endpoints ###########
 tput setaf 42; echo -n "[+] subs enum: endpoints "
-if [ $FLAG = "t" ]; then
-    cat urls.all urls.linkfinder | grep -iE "$OPTARG" | unfurl -u domains > subs.new
-else
-    cat urls.all urls.linkfinder | grep -iE "($roots)" | unfurl -u domains > subs.new
-fi
+cat urls.all urls.linkfinder | grep -iE "$OPTARG" | unfurl -u domains > subs.new
 tput setaf 3; echo "[$(cat subs.new | wc -l)]"
 sleep 5
 
@@ -240,10 +204,10 @@ echo "Total valid IPs: $(cat IPs.txt | wc -l)" | lolcat
 sleep 5
 
 ### Portscan with naabu for subs ###
-naabu -list subs.txt -p 0-65535 -rate 4000 -o subs.naabu
+naabu -list subs.txt -tp 1000 -rate 4000 -o subs.naabu
 
 ### Portscan with naabu for IPs
-naabu -list IPs.txt -p 0-65535 -rate 4000 -o IPs.naabu
+naabu -list IPs.txt tp 1000 - -rate 4000 -o IPs.naabu
 
 ### Nuclie Test for subs ###
 nuclei -l subs.naabu -fr -es info -o subs.nuclei

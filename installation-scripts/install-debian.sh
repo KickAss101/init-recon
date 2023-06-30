@@ -21,7 +21,7 @@ fi
 sudo chown -Rh $USER:$USER /opt
 
 ### Print any uninstalled tools ###
-tools=("anewer" "naabu" "pv" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx-toolkit" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
+tools=("anewer" "naabu" "pv" "dalfox" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "dnsx" "gobuster" "httpx" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
 
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
@@ -35,7 +35,7 @@ done
 # apt installs
 sudo apt update -y
 echo -e "\033[32mAPT Installs \033[0m"
-sudo apt install seclists httpx-toolkit pv python3 python3-pip altdns naabu golang-go lolcat figlet jq cargo massdns gobuster whatweb -y
+sudo apt install pv python3 python3-pip libpcap-dev jq cargo massdns whatweb -y
 
 # Add go bin to path
 echo $PATH | grep -q "go/bin" && echo "go/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
@@ -46,11 +46,23 @@ echo $PATH | grep -q ".cargo/bin" && echo ".cargo/bin is in PATH" || echo 'expor
 # Add /opt/bin to path
 echo $PATH | grep -q "/opt/bin" && echo "/opt/bin is in PATH" || echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
 
+# Add ~/.local/bin to path
+echo $PATH | grep -q ".local/bin" && echo "~/.local/bin is in PATH" || echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.zshrc
+
 source ~/.zshrc
+
+# katana
+go install github.com/projectdiscovery/katana/cmd/katana@latest
+
+# naabu
+go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
+
+# httpx
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 
 # amass
 if ! command -v amass > /dev/null 2>&1; then
-    go install -v github.com/OWASP/Amass/v3/...@master
+    go install -v github.com/owasp-amass/amass/v3/...@master
 fi
 
 #subfinder
@@ -74,8 +86,8 @@ if ! command -v dnsx > /dev/null 2>&1; then
 fi
 
 # github-endpoints
-if ! command -v github-subdomains > /dev/null 2>&1; then
-    go install github.com/gwen001/github-endpoints@latest
+if ! command -v github-endpoints > /dev/null 2>&1; then
+    go install -v github.com/gwen001/github-endpoints@latest
 fi
 
 # gospider
@@ -113,14 +125,14 @@ if ! command -v nuclei > /dev/null 2>&1; then
     go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
 fi
 
-# ripgen
-if ! command -v ripgen > /dev/null 2>&1; then
-    cargo install ripgen
-fi
-
 # arjun
 if ! command -v arjun > /dev/null 2>&1; then
     pip install arjun
+fi
+
+# altdns
+if ! command -v altdns > /dev/null 2>&1; then
+    pip3 install py-altdns==1.0.2
 fi
 
 # Dalfox
@@ -131,21 +143,31 @@ fi
 # xnLinkFinder.py
 if ! command -v xnLinkFinder.py > /dev/null 2>&1; then
     cd /opt
-    sudo git clone https://github.com/xnl-h4ck3r/xnLinkFinder.git
+    git clone https://github.com/xnl-h4ck3r/xnLinkFinder.git
     cd xnLinkFinder
     sudo python setup.py install
-    sudo chmod +x xnLinkFinder.py
+    chmod +x xnLinkFinder.py
     sudo ln -s /opt/xnLinkFinder/xnLinkFinder.py /opt/bin
 fi
 
 # findomain
 if ! command -v findomain > /dev/null 2>&1; then
     cd /opt
-    sudo curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
-    sudo unzip findomain-linux.zip
+    curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+    unzip findomain-linux.zip
     sudo chmod +x findomain
-    sudo mv findomain /opt/bin
+    mv findomain /opt/bin
     cd
+fi
+
+# massdns
+if ! command -v massdns > /dev/null 2>&1; then
+    cd /opt
+    wget https://github.com/blechschmidt/massdns/archive/refs/tags/v1.0.0.zip
+    unzip v1.0.0.zip
+    cd massdns-1.0.0
+    make
+    cp bin/massdns /opt/bin
 fi
 
 # gau
@@ -158,7 +180,6 @@ if ! command -v anewer > /dev/null 2>&1; then
     cargo install anewer
 fi
 
-### Wordlists ###
 # gf-patterns
 if [ ! -d /.gf ];then
     mkdir ~/.gf
@@ -168,16 +189,14 @@ cd /opt
 git clone https://github.com/1ndianl33t/Gf-Patterns 2>/dev/null
 mv Gf-Patterns/*.json ~/.gf 2>/dev/null
 
-# resolvers
+# Wordlists
 cd ~/git/wordlists
 git clone https://github.com/trickest/resolvers
 git clone https://github.com/KickAss101/ALL.TXTs
 git clone https://github.com/six2dez/OneListForAll
-
-# assestnotes wordlists
+git clone https://github.com/danielmiessler/SecLists
 
 ### Print any uninstalled tools ###
-tools=("anewer" "naabu" "dalfox" "pv" "findomain" "altdns" "amass" "subfinder" "github-subdomains" "puredns" "massdns" "cargo" "ripgen" "dnsx" "gobuster" "httpx-toolkit" "github-endpoints" "gau" "gospider" "unfurl" "subjs" "xnLinkFinder.py" "nuclei" "whatweb" "gf" "qsreplace" "kxss" "arjun")
 for tool in "${tools[@]}"; do
     if ! command -v $tool > /dev/null 2>&1; then
         echo -e "\033[31mInstall $tool manually\033[0m"
